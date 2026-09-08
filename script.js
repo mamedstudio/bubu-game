@@ -66,7 +66,6 @@ const audioPlayer = {
     isMuted: false,
     
     init() {
-        // Criar elementos de áudio
         this.openingMusic = new Audio('assets/audio/abertura.mp3');
         this.backgroundMusic = new Audio('assets/audio/trilha.mp3');
         
@@ -74,7 +73,6 @@ const audioPlayer = {
         this.backgroundMusic.volume = 0.3;
         this.backgroundMusic.loop = true;
         
-        // Quando abertura terminar, iniciar trilha
         this.openingMusic.addEventListener('ended', () => {
             console.log('🎵 Abertura terminou, iniciando trilha...');
             this.startBackground();
@@ -96,18 +94,16 @@ const audioPlayer = {
                 .then(() => console.log('🎵 Música de abertura tocando!'))
                 .catch(err => {
                     console.warn('⚠️ Autoplay bloqueado:', err);
-                    console.log('👆 Aguardando interação do usuário...');
+                    console.log(' Aguardando interação do usuário...');
                 });
         }
     },
     
     startBackground() {
         if (!this.isMuted) {
-            // Parar abertura se ainda estiver tocando
             this.openingMusic.pause();
             this.openingMusic.currentTime = 0;
             
-            // Iniciar trilha
             this.backgroundMusic.currentTime = 0;
             this.backgroundMusic.play()
                 .then(() => console.log('🎵 Trilha de fundo tocando!'))
@@ -144,12 +140,10 @@ audioPlayer.init();
 window.addEventListener('load', () => {
     console.log('🎮 Jogo carregado, iniciando sequência...');
     
-    // Tentar tocar música após 500ms
     setTimeout(() => {
         audioPlayer.playOpening();
     }, 500);
     
-    // Sequência da animação
     setTimeout(() => {
         setTimeout(() => {
             document.querySelector('.speech-bubble').classList.add('show');
@@ -157,12 +151,11 @@ window.addEventListener('load', () => {
                 setTimeout(() => {
                     document.getElementById('speechText').textContent = "Let's play!";
                     speak("Let's play!");
-                }, 2000); // 2 segundos entre frases
+                }, 2000);
             });
         }, 3500);
     }, 500);
     
-    // Auto-pulo após 16s
     setTimeout(() => {
         if (document.querySelector('.logo-screen').style.display !== 'none') {
             document.getElementById('startBtn').click();
@@ -174,7 +167,7 @@ window.addEventListener('load', () => {
 // BOTÃO SKIP
 // ============================================
 skipBtn.addEventListener('click', () => {
-    console.log('️ Pulando abertura...');
+    console.log('⏭️ Pulando abertura...');
     audioPlayer.stopAll();
     
     document.querySelector('.logo-screen').style.display = 'none';
@@ -198,7 +191,6 @@ startBtn.addEventListener('click', () => {
     gameScreen.classList.add('active');
     skipBtn.style.display = 'none';
     
-    // Cortar música de entrada e iniciar trilha
     audioPlayer.stopAll();
     setTimeout(() => {
         audioPlayer.startBackground();
@@ -221,7 +213,7 @@ function loadLevel(levelIndex) {
         speak(`Let's play ${level.name}!`, () => {
             setTimeout(() => {
                 loadRound();
-            }, 2000); // 2 segundos de pausa
+            }, 2000);
         });
     }, 500);
 }
@@ -241,7 +233,6 @@ function loadRound() {
     
     bubuSpeech.textContent = `Where is the ${currentItem.word}?`;
     
-    // Criar cards
     roundItems.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -257,10 +248,8 @@ function loadRound() {
         cardsContainer.appendChild(card);
     });
     
-    // Falar a pergunta e depois pronunciar cada item com zoom
     setTimeout(() => {
         speak(`Where is the ${currentItem.word}?`, () => {
-            // Aguardar 2 segundos antes de pronunciar os itens
             setTimeout(() => {
                 pronounceItems(roundItems);
             }, 2000);
@@ -276,22 +265,19 @@ function pronounceItems(items) {
         setTimeout(() => {
             const card = currentCards[index];
             if (card) {
-                // Adicionar classe de zoom
                 card.classList.add('speaking');
                 
-                // Falar a palavra 2 vezes
                 speak(item.word, () => {
                     setTimeout(() => {
                         speak(item.word, () => {
-                            // Remover classe após segunda pronúncia
                             setTimeout(() => {
                                 card.classList.remove('speaking');
                             }, 600);
                         });
-                    }, 500); // 0.5s entre as repetições
+                    }, 500);
                 });
             }
-        }, index * 3000); // 3 segundos entre cada item (2 pronúncias + pausa)
+        }, index * 3000);
     });
 }
 
@@ -308,7 +294,6 @@ function handleAnswer(selected, card, event) {
         
         bubuSpeech.textContent = `${selected.word}! Great job!`;
         
-        // Repetir a palavra correta várias vezes
         speak(`${selected.word}! ${selected.word}! Great job!`, () => {
             setTimeout(() => {
                 createConfetti();
@@ -323,7 +308,6 @@ function handleAnswer(selected, card, event) {
         card.classList.add('wrong');
         bubuSpeech.textContent = 'Try again!';
         speak('Try again! You can do it!', () => {
-            // Repetir a pergunta novamente após 2 segundos
             setTimeout(() => {
                 speak(`Where is the ${currentItem.word}?`, () => {
                     setTimeout(() => {
@@ -373,7 +357,6 @@ nextLevelBtn.addEventListener('click', () => {
 // ============================================
 soundBtn.addEventListener('click', () => {
     if (currentItem) {
-        // Repetir pergunta e itens
         speak(`Where is the ${currentItem.word}?`, () => {
             setTimeout(() => {
                 pronounceItems(currentCards.map(card => ({
@@ -398,7 +381,7 @@ function speak(text, callback) {
     
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
-    utterance.rate = 0.8; // Mais lento para crianças
+    utterance.rate = 0.8;
     utterance.pitch = 1.3;
     
     if (callback) {
