@@ -41,10 +41,9 @@ let currentLevel = 0;
 let currentItem = null;
 let isAnswering = false;
 let synth = window.speechSynthesis;
+let currentCards = [];
 
 // Elementos DOM
-const playOverlay = document.getElementById('playOverlay');
-const playBtn = document.getElementById('playBtn');
 const startBtn = document.getElementById('startBtn');
 const skipBtn = document.getElementById('skipBtn');
 const gameScreen = document.getElementById('gameScreen');
@@ -68,26 +67,37 @@ const audioPlayer = {
     isMuted: false,
     
     init() {
-        this.openingMusic.volume = 0.7; // Abertura: 70%
-        this.backgroundMusic.volume = 0.3; // Background: 30% (mais baixo)
+        this.openingMusic.volume = 0.7;
+        this.backgroundMusic.volume = 0.3;
         this.backgroundMusic.loop = true;
         
         this.openingMusic.addEventListener('ended', () => {
             this.startBackground();
         });
+        
+        // Tentar autoplay após interação do usuário
+        document.addEventListener('click', () => {
+            if (this.openingMusic.paused && this.backgroundMusic.paused) {
+                // Já está tocando ou já foi iniciado
+            }
+        }, { once: true });
     },
     
     playOpening() {
         if (!this.isMuted) {
             this.openingMusic.currentTime = 0;
-            this.openingMusic.play().catch(err => console.warn('⚠️ Auto-play blocked:', err));
+            this.openingMusic.play().catch(err => {
+                console.log('️ Aguardando interação do usuário:', err);
+            });
         }
     },
     
     startBackground() {
         if (!this.isMuted) {
             this.backgroundMusic.currentTime = 0;
-            this.backgroundMusic.play().catch(err => console.warn('⚠️ Background blocked:', err));
+            this.backgroundMusic.play().catch(err => {
+                console.log('⚠️ Background blocked:', err);
+            });
         }
     },
     
@@ -112,13 +122,15 @@ const audioPlayer = {
 audioPlayer.init();
 
 // ============================================
-// BOTÃO PLAY (contornar autoplay)
+// SEQUÊNCIA DA CAPA (AUTOPLAY)
 // ============================================
-playBtn.addEventListener('click', () => {
-    playOverlay.style.display = 'none';
-    audioPlayer.playOpening();
+window.addEventListener('load', () => {
+    // Iniciar música automaticamente
+    setTimeout(() => {
+        audioPlayer.playOpening();
+    }, 500);
     
-    // Iniciar sequência da capa
+    // Sequência da animação
     setTimeout(() => {
         setTimeout(() => {
             document.querySelector('.speech-bubble').classList.add('show');
@@ -195,6 +207,7 @@ function loadLevel(levelIndex) {
 function loadRound() {
     isAnswering = true;
     cardsContainer.innerHTML = '';
+    currentCards = [];
     
     const level = levels[currentLevel];
     const shuffled = [...level.items].sort(() => Math.random() - 0.5);
@@ -202,20 +215,46 @@ function loadRound() {
     currentItem = roundItems[Math.floor(Math.random() * 3)];
     
     bubuSpeech.textContent = `Where is the ${currentItem.word}?`;
-    speak(`Where is the ${currentItem.word}?`, null, true);
     
+    // Criar cards
     roundItems.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'card';
         card.innerHTML = `<img src="${item.image}" alt="${item.word}">`;
+        card.dataset.word = item.word;
         
         setTimeout(() => {
             card.classList.add('visible');
-        }, index * 200);
+            currentCards.push(card);
+        }, index * 300);
         
         card.addEventListener('click', (e) => handleAnswer(item, card, e));
         cardsContainer.appendChild(card);
     });
+    
+    // Falar a pergunta e depois pronunciar cada item com zoom
+    setTimeout(() => {
+        speak(`Where is the ${currentItem.word}?`, () => {
+            // Pronunciar cada item com zoom sincronizado
+            roundItems.forEach((item, index) => {
+                setTimeout(() => {
+                    const card = currentCards[index];
+                    if (card) {
+                        // Adicionar classe de zoom
+                        card.classList.add('speaking');
+                        
+                        // Falar a palavra
+                        speak(item.word, () => {
+                            // Remover classe após animação
+                            setTimeout(() => {
+                                card.classList.remove('speaking');
+                            }, 600);
+                        });
+                    }
+                }, index * 1500); // 1.5s entre cada palavra
+            });
+        }, true); // Repetir pergunta
+    }, 500);
 }
 
 // ============================================
@@ -230,7 +269,9 @@ function handleAnswer(selected, card, event) {
         bubuGame.classList.add('celebrate');
         
         bubuSpeech.textContent = `${selected.word}! Great job!`;
-        speak(`${selected.word}! ${selected.word}! Great job!`, () => {
+        
+        // Repetir a palavra correta várias vezes
+        speak(`${selected.word}! ${selected.word}! Great job! ${selected.word}!`, () => {
             setTimeout(() => {
                 createConfetti();
                 
@@ -238,12 +279,17 @@ function handleAnswer(selected, card, event) {
                     showCongratulations();
                 }, 1500);
             }, 1000);
-        }, true);
+        }, true); // Repetir
         
     } else {
         card.classList.add('wrong');
         bubuSpeech.textContent = 'Try again!';
-        speak('Try again! You can do it!');
+        speak('Try again! You can do it!', () => {
+            // Repetir a pergunta novamente
+            setTimeout(() => {
+                speak(`Where is the ${currentItem.word}?`, null, true);
+            }, 500);
+        });
         
         setTimeout(() => {
             card.classList.remove('wrong');
@@ -257,7 +303,7 @@ function handleAnswer(selected, card, event) {
 function showCongratulations() {
     congratsText.textContent = `You completed Level ${currentLevel + 1}!`;
     congratsScreen.classList.add('active');
-    speak('Congratulations!');
+    speak('Congratulations! Congratulations!');
 }
 
 // ============================================
@@ -272,7 +318,7 @@ nextLevelBtn.addEventListener('click', () => {
     } else {
         congratsText.textContent = 'You completed all levels! ';
         congratsScreen.classList.add('active');
-        speak('You completed all levels! Amazing!');
+        speak('You completed all levels! Amazing! Amazing!');
         
         setTimeout(() => {
             location.reload();
@@ -285,7 +331,19 @@ nextLevelBtn.addEventListener('click', () => {
 // ============================================
 soundBtn.addEventListener('click', () => {
     if (currentItem) {
-        speak(`Where is the ${currentItem.word}?`, null, true);
+        // Repetir pergunta e itens
+        speak(`Where is the ${currentItem.word}?`, () => {
+            currentCards.forEach((card, index) => {
+                setTimeout(() => {
+                    card.classList.add('speaking');
+                    speak(card.dataset.word, () => {
+                        setTimeout(() => {
+                            card.classList.remove('speaking');
+                        }, 600);
+                    });
+                }, index * 1500);
+            });
+        }, true);
     }
 });
 
@@ -296,13 +354,16 @@ homeBtn.addEventListener('click', () => {
 });
 
 // ============================================
-// ÁUDIO (Text-to-Speech)
+// ÁUDIO (Text-to-Speech) - SEMPRE REPETE
 // ============================================
-function speak(text, callback, repeat = false) {
+function speak(text, callback, alwaysRepeat = false) {
     synth.cancel();
-    const utterance = new SpeechSynthesisUtterance(text);
+    
+    const repeatText = alwaysRepeat ? `${text} ${text}` : text;
+    
+    const utterance = new SpeechSynthesisUtterance(repeatText);
     utterance.lang = 'en-US';
-    utterance.rate = 0.85;
+    utterance.rate = 0.8; // Mais lento para crianças
     utterance.pitch = 1.3;
     
     if (callback) {
@@ -310,12 +371,6 @@ function speak(text, callback, repeat = false) {
     }
     
     synth.speak(utterance);
-    
-    if (repeat) {
-        setTimeout(() => {
-            synth.speak(new SpeechSynthesisUtterance(text));
-        }, 1500);
-    }
 }
 
 // ============================================
