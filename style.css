@@ -1,1 +1,505 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
 
+body {
+    font-family: 'Comic Sans MS', 'Chalkboard SE', sans-serif;
+    overflow: hidden;
+    width: 100vw;
+    height: 100vh;
+}
+
+/* CAPA - LOGO */
+.logo-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: white;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+    animation: fadeOutLogo 0.8s ease-in 2.5s forwards;
+}
+
+.logo-screen img {
+    max-width: 80%;
+    max-height: 70%;
+    animation: logoPop 0.6s ease-out;
+}
+
+@keyframes logoPop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+@keyframes fadeOutLogo {
+    to { opacity: 0; visibility: hidden; }
+}
+
+/* CENÁRIO DA CIDADE */
+.city-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    opacity: 0;
+    background: url('assets/backgrounds/city.webp') center/cover;
+    animation: fadeInCity 1s ease-in 2.5s forwards;
+}
+
+@keyframes fadeInCity {
+    to { opacity: 1; }
+}
+
+/* BUBU ANDANDO */
+.bubu-walking {
+    position: fixed;
+    bottom: 10%;
+    left: -250px;
+    width: 200px;
+    height: 200px;
+    background-image: url('assets/characters/bubu-walk.webp');
+    background-size: contain;
+    background-repeat: no-repeat;
+    animation: walkAcross 3s ease-out 3.5s forwards;
+    z-index: 100;
+}
+
+@keyframes walkAcross {
+    0% { left: -250px; }
+    100% { left: calc(50% - 100px); }
+}
+
+.bubu-standing {
+    position: fixed;
+    bottom: 10%;
+    left: calc(50% - 100px);
+    width: 200px;
+    height: 200px;
+    background: url('assets/characters/bubu-standing.webp') center/contain no-repeat;
+    opacity: 0;
+    animation: showBubu 0.5s ease-out 6.5s forwards;
+    z-index: 100;
+}
+
+@keyframes showBubu {
+    to { opacity: 1; }
+}
+
+/* BALÃO DE FALA */
+.speech-bubble {
+    position: fixed;
+    top: 25%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 40px;
+    padding: 25px 40px;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+    opacity: 0;
+    z-index: 200;
+    min-width: 280px;
+    text-align: center;
+}
+
+.speech-bubble.show {
+    animation: bubblePop 0.5s ease-out 6.5s forwards;
+}
+
+@keyframes bubblePop {
+    0% { opacity: 0; transform: translateX(-50%) scale(0); }
+    70% { transform: translateX(-50%) scale(1.1); }
+    100% { opacity: 1; transform: translateX(-50%) scale(1); }
+}
+
+.speech-text {
+    font-size: 2.5rem;
+    font-weight: bold;
+    color: #2196F3;
+}
+
+/* BOTÃO START */
+.start-btn {
+    position: fixed;
+    bottom: 15%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: linear-gradient(135deg, #FF6B6B 0%, #FFA07A 100%);
+    color: white;
+    border: none;
+    padding: 25px 60px;
+    font-size: 2.5rem;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+    opacity: 0;
+    z-index: 300;
+    font-family: 'Comic Sans MS', sans-serif;
+    animation: showBtn 0.5s ease-out 9s forwards, pulse 2s ease-in-out 9s infinite;
+}
+
+@keyframes showBtn {
+    to { opacity: 1; }
+}
+
+@keyframes pulse {
+    0%, 100% { transform: translateX(-50%) scale(1); }
+    50% { transform: translateX(-50%) scale(1.05); }
+}
+
+/* BOTÃO SKIP */
+.skip-btn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 2px solid #FF6B6B;
+    border-radius: 25px;
+    color: #FF6B6B;
+    font-weight: bold;
+    cursor: pointer;
+    z-index: 1000;
+    font-family: 'Comic Sans MS', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.skip-btn:hover {
+    background: #FF6B6B;
+    color: white;
+}
+
+/* TELA DO JOGO */
+.game-screen {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-size: cover;
+    background-position: center bottom;
+    z-index: 400;
+}
+
+.game-screen.active {
+    display: block;
+}
+
+.game-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 80px;
+}
+
+.game-logo {
+    position: fixed;
+    top: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 500;
+    background: white;
+    border-radius: 30px;
+    padding: 10px 30px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+}
+
+.game-logo img {
+    height: 50px;
+}
+
+.level-indicator {
+    background: white;
+    border-radius: 20px;
+    padding: 10px 30px;
+    margin-bottom: 20px;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #333;
+}
+
+.cards-container {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 20px;
+    margin-top: 50px;
+}
+
+.card {
+    width: 180px;
+    height: 180px;
+    background: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+    opacity: 0;
+    transform: scale(0);
+    position: relative;
+    overflow: hidden;
+}
+
+.card.visible {
+    opacity: 1;
+    transform: scale(1);
+    animation: cardBounce 0.6s ease-out;
+}
+
+@keyframes cardBounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+.card:hover {
+    transform: translateY(-10px) scale(1.05);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+.card img {
+    width: 85%;
+    height: 85%;
+    object-fit: contain;
+}
+
+.card.correct {
+    animation: correctZoom 1s ease;
+    border: 8px solid #4CAF50;
+    z-index: 10;
+}
+
+@keyframes correctZoom {
+    0% { transform: scale(1); }
+    20% { transform: scale(1.5); }
+    40% { transform: scale(1.5); }
+    60% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.card.wrong {
+    animation: shake 0.6s ease;
+    border: 8px solid #FF9800;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-20px); }
+    75% { transform: translateX(20px); }
+}
+
+.bubu-game {
+    position: fixed;
+    bottom: 0;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 180px;
+    height: 180px;
+    background: url('assets/characters/bubu-standing.webp') center/contain no-repeat;
+    z-index: 500;
+}
+
+.bubu-game.celebrate {
+    background: url('assets/characters/bubu-celebrate.webp') center/contain no-repeat;
+    animation: bubuJump 0.8s ease;
+}
+
+@keyframes bubuJump {
+    0%, 100% { transform: translateX(-50%) translateY(0); }
+    50% { transform: translateX(-50%) translateY(-30px); }
+}
+
+.bubu-speech {
+    position: absolute;
+    top: -70px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: white;
+    border-radius: 25px;
+    padding: 15px 25px;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    white-space: nowrap;
+    font-size: 1.3rem;
+    font-weight: bold;
+    color: #2196F3;
+}
+
+.congrats-screen {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.7);
+    z-index: 600;
+    justify-content: center;
+    align-items: center;
+}
+
+.congrats-screen.active {
+    display: flex;
+}
+
+.congrats-content {
+    background: white;
+    border-radius: 40px;
+    padding: 40px 60px;
+    text-align: center;
+    animation: congratsPop 0.6s ease-out;
+}
+
+@keyframes congratsPop {
+    0% { transform: scale(0); opacity: 0; }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.congrats-title {
+    font-size: 3rem;
+    color: #4CAF50;
+    margin-bottom: 20px;
+    font-weight: bold;
+}
+
+.congrats-text {
+    font-size: 1.8rem;
+    color: #333;
+    margin-bottom: 30px;
+}
+
+.next-level-btn {
+    background: linear-gradient(135deg, #4CAF50 0%, #66BB6A 100%);
+    color: white;
+    border: none;
+    padding: 20px 50px;
+    font-size: 2rem;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
+    font-family: 'Comic Sans MS', sans-serif;
+    transition: all 0.3s ease;
+}
+
+.next-level-btn:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 35px rgba(76, 175, 80, 0.6);
+}
+
+.confetti {
+    position: fixed;
+    width: 12px;
+    height: 12px;
+    pointer-events: none;
+    z-index: 700;
+    animation: confettiFall 3s linear forwards;
+}
+
+@keyframes confettiFall {
+    0% { transform: translateY(-100px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+}
+
+.controls {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    display: flex;
+    gap: 15px;
+    z-index: 500;
+}
+
+.control-btn {
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border: none;
+    background: white;
+    box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+    cursor: pointer;
+    font-size: 1.5rem;
+    transition: all 0.3s ease;
+}
+
+.control-btn:hover {
+    transform: scale(1.1);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
+}
+
+/* BOTÃO PLAY (para contornar autoplay) */
+.play-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 2000;
+}
+
+.play-btn {
+    background: linear-gradient(135deg, #FF6B6B 0%, #FFA07A 100%);
+    color: white;
+    border: none;
+    padding: 30px 60px;
+    font-size: 3rem;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+    font-family: 'Comic Sans MS', sans-serif;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.play-btn:hover {
+    transform: scale(1.1);
+}
+
+/* RESPONSIVO */
+@media (max-width: 768px) {
+    .card {
+        width: 130px;
+        height: 130px;
+    }
+
+    .bubu-walking,
+    .bubu-standing,
+    .bubu-game {
+        width: 150px;
+        height: 150px;
+    }
+
+    .speech-text {
+        font-size: 1.8rem;
+    }
+
+    .congrats-title {
+        font-size: 2.5rem;
+    }
+
+    .congrats-text {
+        font-size: 1.5rem;
+    }
+}
