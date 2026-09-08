@@ -60,10 +60,10 @@ body {
     to { opacity: 1; }
 }
 
-/* BUBU ANDANDO - CORRIGIDO */
+/* BUBU ANDANDO */
 .bubu-walking {
     position: fixed;
-    bottom: 10%;
+    bottom: 15%;
     left: -200px;
     width: 200px;
     height: 200px;
@@ -100,7 +100,7 @@ body {
 
 .bubu-standing {
     position: fixed;
-    bottom: 10%;
+    bottom: 15%;
     left: calc(50% - 100px);
     width: 200px;
     height: 200px;
@@ -117,7 +117,7 @@ body {
 /* BALÃO DE FALA */
 .speech-bubble {
     position: fixed;
-    top: 25%;
+    top: 20%;
     left: 50%;
     transform: translateX(-50%);
     background: white;
@@ -149,7 +149,7 @@ body {
 /* BOTÃO START */
 .start-btn {
     position: fixed;
-    bottom: 15%;
+    bottom: 10%;
     left: 50%;
     transform: translateX(-50%);
     background: linear-gradient(135deg, #FF6B6B 0%, #FFA07A 100%);
@@ -222,7 +222,7 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 80px;
+    padding-top: 100px;
 }
 
 .game-logo {
@@ -259,7 +259,7 @@ body {
     align-items: center;
     flex-wrap: wrap;
     padding: 20px;
-    margin-top: 50px;
+    margin-top: 30px;
 }
 
 .card {
@@ -481,8 +481,8 @@ body {
 /* RESPONSIVO MOBILE */
 @media (max-width: 768px) {
     .card {
-        width: 120px;
-        height: 120px;
+        width: 110px;
+        height: 110px;
     }
 
     .card img {
@@ -493,19 +493,20 @@ body {
     .bubu-walking,
     .bubu-standing,
     .bubu-game {
-        width: 150px;
-        height: 150px;
+        width: 140px;
+        height: 140px;
+        bottom: 10%;
     }
 
     .bubu-walking {
-        background-size: 600px 150px;
+        background-size: 560px 140px;
     }
 
     @keyframes walkCycle {
         0%   { background-position: 0px 0; }
-        25%  { background-position: -150px 0; }
-        50%  { background-position: -300px 0; }
-        75%  { background-position: -450px 0; }
+        25%  { background-position: -140px 0; }
+        50%  { background-position: -280px 0; }
+        75%  { background-position: -420px 0; }
         100% { background-position: 0px 0; }
     }
 
@@ -521,6 +522,7 @@ body {
     .bubu-speech {
         font-size: 1rem;
         padding: 10px 15px;
+        top: -60px;
     }
 
     .congrats-title {
@@ -534,17 +536,33 @@ body {
     .start-btn {
         font-size: 2rem;
         padding: 20px 40px;
+        bottom: 8%;
     }
 
     .game-logo img {
         height: 40px;
     }
+
+    .game-content {
+        padding-top: 90px;
+    }
+
+    .cards-container {
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .control-btn {
+        width: 45px;
+        height: 45px;
+        font-size: 1.3rem;
+    }
 }
 
 @media (max-width: 480px) {
     .card {
-        width: 100px;
-        height: 100px;
+        width: 95px;
+        height: 95px;
     }
 
     .cards-container {
@@ -557,6 +575,7 @@ body {
     .bubu-game {
         width: 120px;
         height: 120px;
+        bottom: 8%;
     }
 
     .bubu-walking {
@@ -569,5 +588,21 @@ body {
         50%  { background-position: -240px 0; }
         75%  { background-position: -360px 0; }
         100% { background-position: 0px 0; }
+    }
+
+    .bubu-speech {
+        font-size: 0.9rem;
+        padding: 8px 12px;
+        top: -50px;
+    }
+
+    .speech-bubble {
+        padding: 15px 25px;
+        min-width: 220px;
+        top: 15%;
+    }
+
+    .speech-text {
+        font-size: 1.5rem;
     }
 }
