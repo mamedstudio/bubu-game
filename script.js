@@ -42,9 +42,11 @@ let currentItem = null;
 let isAnswering = false;
 let synth = window.speechSynthesis;
 let currentCards = [];
-let isProcessingAudio = false;
+let roundItems = [];
 
 // Elementos DOM
+const playOverlay = document.getElementById('playOverlay');
+const playBtn = document.getElementById('playBtn');
 const startBtn = document.getElementById('startBtn');
 const skipBtn = document.getElementById('skipBtn');
 const gameScreen = document.getElementById('gameScreen');
@@ -75,7 +77,7 @@ const audioPlayer = {
         this.backgroundMusic.loop = true;
         
         this.openingMusic.addEventListener('ended', () => {
-            console.log('🎵 Abertura terminou');
+            console.log(' Abertura terminou');
             this.startBackground();
         });
     },
@@ -85,9 +87,7 @@ const audioPlayer = {
             this.openingMusic.currentTime = 0;
             this.openingMusic.play()
                 .then(() => console.log('🎵 Abertura tocando!'))
-                .catch(err => {
-                    console.warn('⚠️ Autoplay bloqueado - aguardando interação');
-                });
+                .catch(err => console.warn('️ Autoplay bloqueado:', err));
         }
     },
     
@@ -112,94 +112,30 @@ const audioPlayer = {
 audioPlayer.init();
 
 // ============================================
-// SISTEMA DE ÁUDIO SIMPLES E CONFIÁVEL
+// BOTÃO PLAY INICIAL (resolve autoplay mobile)
 // ============================================
-function speak(text, callback, options = {}) {
-    const {
-        repeat = false,
-        onSpeak = null,
-        delay = 0
-    } = options;
-    
-    // Cancela áudio anterior
-    synth.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.8;
-    utterance.pitch = 1.3;
-    
-    utterance.onstart = () => {
-        if (onSpeak) onSpeak();
-    };
-    
-    utterance.onend = () => {
-        if (repeat) {
-            // Repete uma vez após 500ms
-            setTimeout(() => {
-                const repeatUtterance = new SpeechSynthesisUtterance(text);
-                repeatUtterance.lang = 'en-US';
-                repeatUtterance.rate = 0.8;
-                repeatUtterance.pitch = 1.3;
-                repeatUtterance.onend = () => {
-                    if (callback) callback();
-                };
-                synth.speak(repeatUtterance);
-            }, 500);
-        } else {
-            if (callback) callback();
-        }
-    };
-    
-    setTimeout(() => {
-        synth.speak(utterance);
-    }, delay);
-}
-
-// Fala sequencial com delay garantido
-function speakWithDelay(texts, callback, index = 0) {
-    if (index >= texts.length) {
-        if (callback) callback();
-        return;
-    }
-    
-    const current = texts[index];
-    speak(current.text, () => {
-        setTimeout(() => {
-            speakWithDelay(texts, callback, index + 1);
-        }, current.delay || 1500);
-    }, current.options || {});
-}
+playBtn.addEventListener('click', () => {
+    playOverlay.style.display = 'none';
+    audioPlayer.playOpening();
+    startIntroSequence();
+});
 
 // ============================================
-// SEQUÊNCIA DA CAPA (CORRIGIDA)
+// SEQUÊNCIA DA CAPA
 // ============================================
-window.addEventListener('load', () => {
-    console.log('🎮 Jogo carregado!');
+function startIntroSequence() {
+    console.log('🎬 Iniciando sequência da capa...');
     
-    // Tenta tocar música após clique em qualquer lugar
-    document.addEventListener('click', () => {
-        if (audioPlayer.openingMusic.paused && !gameScreen.classList.contains('active')) {
-            audioPlayer.playOpening();
-        }
-    }, { once: true });
-    
-    // Sequência da animação
     setTimeout(() => {
-        // 6.5s: BUBU para e aparece
+        document.querySelector('.speech-bubble').classList.add('show');
+        
         setTimeout(() => {
-            document.querySelector('.speech-bubble').classList.add('show');
-            
-            // Fala "Hi! I'm BUBU!" sincronizado com o balão
-            setTimeout(() => {
-                speak("Hi! I'm BUBU!", () => {
-                    // 2 segundos depois, fala "Let's play!"
-                    setTimeout(() => {
-                        document.getElementById('speechText').textContent = "Let's play!";
-                        speak("Let's play!");
-                    }, 2000);
-                }, { repeat: false });
-            }, 300); // Pequeno delay para o balão aparecer
+            speak("Hi! I'm BUBU!", () => {
+                setTimeout(() => {
+                    document.getElementById('speechText').textContent = "Let's play!";
+                    speak("Let's play!");
+                }, 2000);
+            });
         }, 3500);
     }, 500);
     
@@ -209,13 +145,13 @@ window.addEventListener('load', () => {
             document.getElementById('startBtn').click();
         }
     }, 16000);
-});
+}
 
 // ============================================
 // BOTÃO SKIP
 // ============================================
 skipBtn.addEventListener('click', () => {
-    console.log('️ Pulando...');
+    console.log('⏭️ Pulando...');
     synth.cancel();
     audioPlayer.stopAll();
     
@@ -268,76 +204,117 @@ function loadLevel(levelIndex) {
 }
 
 // ============================================
-// CARREGAR RODADA
+// CARREGAR RODADA (NOVA LÓGICA SEQUENCIAL)
 // ============================================
 function loadRound() {
-    isAnswering = true;
+    isAnswering = false; // Bloqueia cliques até todos aparecerem
     cardsContainer.innerHTML = '';
     currentCards = [];
     synth.cancel();
     
     const level = levels[currentLevel];
     const shuffled = [...level.items].sort(() => Math.random() - 0.5);
-    const roundItems = shuffled.slice(0, 3);
+    roundItems = shuffled.slice(0, 3);
     currentItem = roundItems[Math.floor(Math.random() * 3)];
     
-    bubuSpeech.textContent = `Where is the ${currentItem.word}?`;
+    // Sequência pedagógica:
+    // 1. "Let's go! Let's go!"
+    // 2. Aparece card 1 → fala nome 2x com zoom
+    // 3. Aparece card 2 → fala nome 2x com zoom
+    // 4. Aparece card 3 → fala nome 2x com zoom
+    // 5. Todos clicáveis
+    // 6. Pergunta "Where is the X?"
     
-    // Criar cards
-    roundItems.forEach((item, index) => {
-        const card = document.createElement('div');
-        card.className = 'card';
-        card.innerHTML = `<img src="${item.image}" alt="${item.word}">`;
-        card.dataset.word = item.word;
-        
+    speak("Let's go! Let's go!", () => {
         setTimeout(() => {
-            card.classList.add('visible');
-            currentCards.push(card);
-        }, index * 300);
-        
-        card.addEventListener('click', (e) => handleAnswer(item, card, e));
-        cardsContainer.appendChild(card);
+            showAndPronounceItem(0);
+        }, 1500);
     });
-    
-    // Falar pergunta
-    setTimeout(() => {
-        speak(`Where is the ${currentItem.word}?`, () => {
-            // Após 2s, pronunciar cada item
-            setTimeout(() => {
-                pronounceItemsOneByOne(roundItems, 0);
-            }, 2000);
-        }, { repeat: true });
-    }, 500);
 }
 
 // ============================================
-// PRONUNCIAR ITENS UM POR UM (SIMPLES)
+// MOSTRAR E PRONUNCIAR ITEM SEQUENCIAL
 // ============================================
-function pronounceItemsOneByOne(items, index) {
-    if (index >= items.length) return;
+function showAndPronounceItem(index) {
+    if (index >= roundItems.length) {
+        // Todos apareceram, agora faz a pergunta
+        setTimeout(() => {
+            makeAllCardsClickable();
+            askQuestion();
+        }, 1500);
+        return;
+    }
     
-    const item = items[index];
-    const card = currentCards[index];
+    const item = roundItems[index];
     
-    if (card) {
-        // Zoom quando começa a falar
-        card.classList.add('speaking');
+    // Criar card
+    const card = document.createElement('div');
+    card.className = 'card not-clickable';
+    card.innerHTML = `<img src="${item.image}" alt="${item.word}">`;
+    card.dataset.word = item.word;
+    card.dataset.index = index;
+    
+    cardsContainer.appendChild(card);
+    currentCards.push(card);
+    
+    // Animar entrada
+    setTimeout(() => {
+        card.classList.remove('not-clickable');
+        card.classList.add('visible');
         
-        speak(item.word, () => {
-            // Remove zoom
-            setTimeout(() => {
-                card.classList.remove('speaking');
-                
+        // Falar o nome 2 vezes com zoom
+        setTimeout(() => {
+            pronounceWordWithZoom(item.word, card, () => {
                 // Próximo item após 1.5s
                 setTimeout(() => {
-                    pronounceItemsOneByOne(items, index + 1);
+                    showAndPronounceItem(index + 1);
                 }, 1500);
-            }, 600);
-        }, { repeat: true });
-    } else {
-        // Pula se não tiver card
-        pronounceItemsOneByOne(items, index + 1);
-    }
+            });
+        }, 600);
+    }, 100);
+}
+
+// ============================================
+// PRONUNCIAR PALAVRA COM ZOOM
+// ============================================
+function pronounceWordWithZoom(word, card, callback) {
+    card.classList.add('speaking');
+    
+    speak(word, () => {
+        // Segunda repetição
+        setTimeout(() => {
+            speak(word, () => {
+                setTimeout(() => {
+                    card.classList.remove('speaking');
+                    if (callback) callback();
+                }, 500);
+            });
+        }, 500);
+    });
+}
+
+// ============================================
+// DEIXAR TODOS OS CARDS CLICÁVEIS
+// ============================================
+function makeAllCardsClickable() {
+    currentCards.forEach(card => {
+        card.classList.remove('not-clickable');
+        card.classList.add('clickable');
+        card.addEventListener('click', (e) => {
+            const item = roundItems[parseInt(card.dataset.index)];
+            handleAnswer(item, card, e);
+        });
+    });
+}
+
+// ============================================
+// FAZER A PERGUNTA
+// ============================================
+function askQuestion() {
+    isAnswering = true;
+    bubuSpeech.textContent = `Where is the ${currentItem.word}?`;
+    
+    speak(`Where is the ${currentItem.word}?`, null, { repeat: true });
 }
 
 // ============================================
@@ -372,18 +349,7 @@ function handleAnswer(selected, card, event) {
         speak('Try again! You can do it!', () => {
             setTimeout(() => {
                 // Repete a pergunta
-                speak(`Where is the ${currentItem.word}?`, () => {
-                    // Destaca o item correto
-                    const correctCard = currentCards.find(c => c.dataset.word === currentItem.word);
-                    if (correctCard) {
-                        correctCard.classList.add('speaking');
-                        speak(currentItem.word, () => {
-                            setTimeout(() => {
-                                correctCard.classList.remove('speaking');
-                            }, 600);
-                        }, { repeat: true });
-                    }
-                }, { repeat: true });
+                speak(`Where is the ${currentItem.word}?`, null, { repeat: true });
             }, 2000);
         });
         
@@ -428,13 +394,9 @@ nextLevelBtn.addEventListener('click', () => {
 // CONTROLES
 // ============================================
 soundBtn.addEventListener('click', () => {
-    if (currentItem) {
+    if (currentItem && isAnswering) {
         synth.cancel();
-        speak(`Where is the ${currentItem.word}?`, () => {
-            setTimeout(() => {
-                pronounceItemsOneByOne(currentCards.map(c => ({ word: c.dataset.word })), 0);
-            }, 2000);
-        }, { repeat: true });
+        speak(`Where is the ${currentItem.word}?`, null, { repeat: true });
     }
 });
 
@@ -443,6 +405,39 @@ homeBtn.addEventListener('click', () => {
         location.reload();
     }
 });
+
+// ============================================
+// ÁUDIO (Text-to-Speech)
+// ============================================
+function speak(text, callback, options = {}) {
+    const { repeat = false } = options;
+    
+    synth.cancel();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.8;
+    utterance.pitch = 1.3;
+    
+    utterance.onend = () => {
+        if (repeat) {
+            setTimeout(() => {
+                const repeatUtterance = new SpeechSynthesisUtterance(text);
+                repeatUtterance.lang = 'en-US';
+                repeatUtterance.rate = 0.8;
+                repeatUtterance.pitch = 1.3;
+                repeatUtterance.onend = () => {
+                    if (callback) callback();
+                };
+                synth.speak(repeatUtterance);
+            }, 500);
+        } else {
+            if (callback) callback();
+        }
+    };
+    
+    synth.speak(utterance);
+}
 
 // ============================================
 // CONFETES
