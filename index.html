@@ -8,7 +8,7 @@
 </head>
 <body>
 
-    <!-- BOTÃO PLAY INICIAL (para mobile) -->
+    <!-- BOTÃO PLAY INICIAL -->
     <div class="play-overlay" id="playOverlay">
         <button class="play-btn" id="playBtn">▶ Play</button>
     </div>
@@ -31,13 +31,14 @@
 
     <!-- JOGO -->
     <div class="game-screen" id="gameScreen">
-        <div class="game-logo">
-            <img src="assets/logo/bubu-logo.webp" alt="BUBU">
+        <div class="game-header">
+            <div class="game-logo">
+                <img src="assets/logo/bubu-logo.webp" alt="BUBU">
+            </div>
+            <div class="level-indicator" id="levelIndicator">Level 1: Fruits</div>
         </div>
 
         <div class="game-content">
-            <div class="level-indicator" id="levelIndicator">Level 1: Fruits</div>
-            
             <div class="cards-container" id="cardsContainer">
                 <!-- Cards gerados pelo JavaScript -->
             </div>
