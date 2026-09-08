@@ -79,7 +79,7 @@ const audioPlayer = {
         
         // Quando abertura terminar, iniciar trilha UMA VEZ
         this.openingMusic.addEventListener('ended', () => {
-            console.log(' Abertura terminou, iniciando trilha...');
+            console.log('🎵 Abertura terminou, iniciando trilha...');
             if (!this.backgroundStarted) {
                 this.startBackground();
             }
@@ -114,6 +114,14 @@ const audioPlayer = {
     stopAll() {
         this.openingMusic.pause();
         this.backgroundMusic.pause();
+    },
+    
+    // Reiniciar trilha suavemente
+    restartBackground() {
+        if (!this.isMuted) {
+            this.backgroundMusic.currentTime = 0;
+            this.backgroundMusic.play().catch(err => console.warn('️ Trilha:', err));
+        }
     }
 };
 
@@ -159,7 +167,7 @@ function startIntroSequence() {
 // BOTÃO SKIP
 // ============================================
 skipBtn.addEventListener('click', () => {
-    console.log('⏭️ Pulando...');
+    console.log('️ Pulando...');
     synth.cancel();
     audioPlayer.stopAll();
     
@@ -180,7 +188,7 @@ skipBtn.addEventListener('click', () => {
 // INICIAR JOGO
 // ============================================
 startBtn.addEventListener('click', () => {
-    console.log(' Iniciando jogo...');
+    console.log('🎮 Iniciando jogo...');
     gameScreen.classList.add('active');
     skipBtn.style.display = 'none';
     
@@ -194,7 +202,7 @@ startBtn.addEventListener('click', () => {
 });
 
 // ============================================
-// CARREGAR FASE
+// CARREGAR FASE - FRASE ÚNICA
 // ============================================
 function loadLevel(levelIndex) {
     currentLevel = levelIndex;
@@ -205,11 +213,12 @@ function loadLevel(levelIndex) {
     
     synth.cancel();
     
+    // Falar "Let's play..." apenas UMA VEZ (sem repeat)
     speak(`Let's play ${level.name}!`, () => {
         setTimeout(() => {
             loadRound();
         }, 2000);
-    });
+    }, false); // SEM REPETIÇÃO
 }
 
 // ============================================
@@ -226,11 +235,12 @@ function loadRound() {
     roundItems = shuffled.slice(0, 3);
     currentItem = roundItems[Math.floor(Math.random() * 3)];
     
+    // "Let's go" apenas UMA VEZ
     speak("Let's go! Let's go!", () => {
         setTimeout(() => {
             showAndPronounceItem(0);
         }, 1500);
-    });
+    }, false); // SEM REPETIÇÃO
 }
 
 // ============================================
@@ -261,6 +271,7 @@ function showAndPronounceItem(index) {
         card.classList.add('visible');
         
         setTimeout(() => {
+            // Pronunciar palavra 2 vezes (COM repetição)
             pronounceWordWithZoom(item.word, card, () => {
                 setTimeout(() => {
                     showAndPronounceItem(index + 1);
@@ -271,7 +282,7 @@ function showAndPronounceItem(index) {
 }
 
 // ============================================
-// PRONUNCIAR PALAVRA COM ZOOM
+// PRONUNCIAR PALAVRA COM ZOOM (REPETE 2X)
 // ============================================
 function pronounceWordWithZoom(word, card, callback) {
     card.classList.add('speaking');
@@ -283,9 +294,9 @@ function pronounceWordWithZoom(word, card, callback) {
                     card.classList.remove('speaking');
                     if (callback) callback();
                 }, 500);
-            });
+            }, true); // REPETE
         }, 500);
-    });
+    }, true); // REPETE
 }
 
 // ============================================
@@ -303,13 +314,14 @@ function makeAllCardsClickable() {
 }
 
 // ============================================
-// FAZER A PERGUNTA
+// FAZER A PERGUNTA (COM REPETIÇÃO)
 // ============================================
 function askQuestion() {
     isAnswering = true;
     bubuSpeech.textContent = `Where is the ${currentItem.word}?`;
     
-    speak(`Where is the ${currentItem.word}?`, null, { repeat: true });
+    // Pergunta repete (importante para a criança entender)
+    speak(`Where is the ${currentItem.word}?`, null, true); // COM REPETIÇÃO
 }
 
 // ============================================
@@ -327,6 +339,7 @@ function handleAnswer(selected, card, event) {
         
         bubuSpeech.textContent = `${selected.word}! Great job!`;
         
+        // Resposta correta - repete palavra
         speak(`${selected.word}! Great job!`, () => {
             setTimeout(() => {
                 createConfetti();
@@ -335,17 +348,19 @@ function handleAnswer(selected, card, event) {
                     showCongratulations();
                 }, 1500);
             }, 1000);
-        }, { repeat: true });
+        }, true); // REPETE
         
     } else {
         card.classList.add('wrong');
         bubuSpeech.textContent = 'Try again!';
         
+        // Erro - fala "Try again" sem repetir
         speak('Try again! You can do it!', () => {
             setTimeout(() => {
-                speak(`Where is the ${currentItem.word}?`, null, { repeat: true });
+                // Repete apenas a pergunta (COM repetição)
+                speak(`Where is the ${currentItem.word}?`, null, true);
             }, 2000);
-        });
+        }, false); // SEM REPETIÇÃO
         
         setTimeout(() => {
             card.classList.remove('wrong');
@@ -354,13 +369,14 @@ function handleAnswer(selected, card, event) {
 }
 
 // ============================================
-// CONGRATULATIONS
+// CONGRATULATIONS (SEM REPETIR)
 // ============================================
 function showCongratulations() {
     congratsText.textContent = `You completed Level ${currentLevel + 1}!`;
     congratsScreen.classList.add('active');
     
-    speak('Congratulations!', null, { repeat: true });
+    // Congratulations fala apenas uma vez
+    speak('Congratulations!', null, false); // SEM REPETIÇÃO
 }
 
 // ============================================
@@ -372,6 +388,8 @@ nextLevelBtn.addEventListener('click', () => {
     synth.cancel();
     
     if (currentLevel < levels.length - 1) {
+        // Reiniciar trilha suavemente
+        audioPlayer.restartBackground();
         loadLevel(currentLevel + 1);
     } else {
         congratsText.textContent = 'You completed all levels!';
@@ -380,7 +398,7 @@ nextLevelBtn.addEventListener('click', () => {
             setTimeout(() => {
                 location.reload();
             }, 3000);
-        });
+        }, false); // SEM REPETIÇÃO
     }
 });
 
@@ -390,7 +408,8 @@ nextLevelBtn.addEventListener('click', () => {
 soundBtn.addEventListener('click', () => {
     if (currentItem && isAnswering) {
         synth.cancel();
-        speak(`Where is the ${currentItem.word}?`, null, { repeat: true });
+        // Botão repete apenas a pergunta
+        speak(`Where is the ${currentItem.word}?`, null, true);
     }
 });
 
@@ -401,11 +420,9 @@ homeBtn.addEventListener('click', () => {
 });
 
 // ============================================
-// ÁUDIO (Text-to-Speech)
+// ÁUDIO (Text-to-Speech) - CONTROLE DE REPETIÇÃO
 // ============================================
-function speak(text, callback, options = {}) {
-    const { repeat = false } = options;
-    
+function speak(text, callback, repeat = false) {
     synth.cancel();
     
     const utterance = new SpeechSynthesisUtterance(text);
