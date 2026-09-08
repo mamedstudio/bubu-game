@@ -43,7 +43,6 @@ let isAnswering = false;
 let synth = window.speechSynthesis;
 let currentCards = [];
 let roundItems = [];
-let isSpeaking = false;
 
 // Elementos DOM
 const playOverlay = document.getElementById('playOverlay');
@@ -92,7 +91,7 @@ const audioPlayer = {
             this.openingMusic.currentTime = 0;
             this.openingMusic.play()
                 .then(() => console.log('🎵 Abertura tocando!'))
-                .catch(err => console.warn('️ Autoplay bloqueado:', err));
+                .catch(err => console.warn('⚠️ Autoplay bloqueado:', err));
         }
     },
     
@@ -117,7 +116,7 @@ const audioPlayer = {
     restartBackground() {
         if (!this.isMuted) {
             this.backgroundMusic.currentTime = 0;
-            this.backgroundMusic.play().catch(err => console.warn('⚠️ Trilha:', err));
+            this.backgroundMusic.play().catch(err => console.warn('️ Trilha:', err));
         }
     }
 };
@@ -125,10 +124,11 @@ const audioPlayer = {
 audioPlayer.init();
 
 // ============================================
-// FUNÇÃO SPEAK - SEM REPETIÇÃO POR PADRÃO
+// FUNÇÕES DE ÁUDIO
 // ============================================
+
+// Fala normal (sem repetição)
 function speak(text, callback) {
-    // Cancela áudio anterior
     synth.cancel();
     
     const utterance = new SpeechSynthesisUtterance(text);
@@ -143,7 +143,7 @@ function speak(text, callback) {
     synth.speak(utterance);
 }
 
-// Função específica para repetir objetos (2x)
+// Fala objeto (repete 2x)
 function speakObject(word, card, callback) {
     synth.cancel();
     
@@ -155,7 +155,6 @@ function speakObject(word, card, callback) {
     utterance.pitch = 1.3;
     
     utterance.onend = () => {
-        // Segunda repetição
         setTimeout(() => {
             const repeatUtterance = new SpeechSynthesisUtterance(word);
             repeatUtterance.lang = 'en-US';
@@ -176,7 +175,7 @@ function speakObject(word, card, callback) {
     synth.speak(utterance);
 }
 
-// Função para repetir pergunta (importante para criança entender)
+// Fala pergunta (repete 2x)
 function speakQuestion(text, callback) {
     synth.cancel();
     
@@ -213,35 +212,38 @@ playBtn.addEventListener('click', () => {
 });
 
 // ============================================
-// SEQUÊNCIA DA CAPA - SINCRONIZADA
+// SEQUÊNCIA DA CAPA - SINCRONIZAÇÃO PERFEITA
 // ============================================
 function startIntroSequence() {
     console.log('🎬 Iniciando sequência da capa...');
     
-    // 6.5s: BUBU aparece (animação CSS)
-    // 6.5s: Balão aparece com "Hi! I'm BUBU!"
-    // 6.5s: Áudio fala "Hi! I'm BUBU!"
-    // Quando terminar: muda texto para "Let's play!"
-    // Fala "Let's play!"
+    // Timeline:
+    // 0s: Play clicado
+    // 0.5s: Música começa
+    // 2.5s: Logo desaparece
+    // 3.5s: BUBU começa a andar
+    // 6.5s: BUBU para, balão aparece, fala "Hi! I'm BUBU!"
+    // 8.5s: Muda para "Let's play!"
     
+    // Mostrar balão e sincronizar com áudio
     setTimeout(() => {
         // Mostra balão
         document.querySelector('.speech-bubble').classList.add('show');
         
-        // Define texto ANTES de falar (sincronizado)
+        // SINCRONIZAÇÃO: Muda texto e fala AO MESMO TEMPO
         speechText.textContent = "Hi! I'm BUBU!";
         
-        // Fala sincronizado com o balão
+        // Pequeno delay para garantir que o balão apareceu
         setTimeout(() => {
             speak("Hi! I'm BUBU!", () => {
-                // Quando terminar de falar, muda para "Let's play!"
+                // Quando termina de falar "Hi! I'm BUBU!"
                 setTimeout(() => {
                     speechText.textContent = "Let's play!";
                     speak("Let's play!");
                 }, 1000);
             });
-        }, 500);
-    }, 6500); // Espera BUBU aparecer
+        }, 300);
+    }, 6500); // 6.5s - quando BUBU para de andar
     
     // Auto-pulo após 16s
     setTimeout(() => {
@@ -290,7 +292,7 @@ startBtn.addEventListener('click', () => {
 });
 
 // ============================================
-// CARREGAR FASE - SEM REPETIÇÃO
+// CARREGAR FASE
 // ============================================
 function loadLevel(levelIndex) {
     currentLevel = levelIndex;
@@ -301,7 +303,6 @@ function loadLevel(levelIndex) {
     
     synth.cancel();
     
-    // Fala "Let's play Fruits!" apenas UMA VEZ
     speak(`Let's play ${level.name}!`, () => {
         setTimeout(() => {
             loadRound();
@@ -332,7 +333,7 @@ function loadRound() {
 }
 
 // ============================================
-// MOSTRAR E PRONUNCIAR ITEM (REPETE 2X)
+// MOSTRAR E PRONUNCIAR ITEM
 // ============================================
 function showAndPronounceItem(index) {
     if (index >= roundItems.length) {
@@ -359,7 +360,6 @@ function showAndPronounceItem(index) {
         card.classList.add('visible');
         
         setTimeout(() => {
-            // Pronunciar objeto 2 vezes com zoom
             speakObject(item.word, card, () => {
                 setTimeout(() => {
                     showAndPronounceItem(index + 1);
@@ -384,13 +384,12 @@ function makeAllCardsClickable() {
 }
 
 // ============================================
-// FAZER A PERGUNTA (REPETE 2X)
+// FAZER A PERGUNTA
 // ============================================
 function askQuestion() {
     isAnswering = true;
     bubuSpeech.textContent = `Where is the ${currentItem.word}?`;
     
-    // Pergunta repete 2x (importante para criança)
     speakQuestion(`Where is the ${currentItem.word}?`);
 }
 
@@ -409,7 +408,6 @@ function handleAnswer(selected, card, event) {
         
         bubuSpeech.textContent = `${selected.word}! Great job!`;
         
-        // Fala palavra correta + "Great job!" (sem repetir frase)
         speak(`${selected.word}! Great job!`, () => {
             setTimeout(() => {
                 createConfetti();
@@ -424,10 +422,8 @@ function handleAnswer(selected, card, event) {
         card.classList.add('wrong');
         bubuSpeech.textContent = 'Try again!';
         
-        // "Try again" sem repetir
         speak('Try again! You can do it!', () => {
             setTimeout(() => {
-                // Repete apenas a pergunta
                 speakQuestion(`Where is the ${currentItem.word}?`);
             }, 2000);
         });
@@ -439,13 +435,12 @@ function handleAnswer(selected, card, event) {
 }
 
 // ============================================
-// CONGRATULATIONS (SEM REPETIR)
+// CONGRATULATIONS
 // ============================================
 function showCongratulations() {
     congratsText.textContent = `You completed Level ${currentLevel + 1}!`;
     congratsScreen.classList.add('active');
     
-    // "Congratulations" apenas UMA VEZ
     speak('Congratulations!');
 }
 
@@ -477,7 +472,6 @@ nextLevelBtn.addEventListener('click', () => {
 soundBtn.addEventListener('click', () => {
     if (currentItem && isAnswering) {
         synth.cancel();
-        // Botão repete apenas a pergunta
         speakQuestion(`Where is the ${currentItem.word}?`);
     }
 });
