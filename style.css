@@ -148,7 +148,7 @@ body {
     to { opacity: 1; }
 }
 
-/* BALÃO DE FALA */
+/* BALÃO DE FALA - SEM ANIMAÇÃO FIXA (controlado via JS) */
 .speech-bubble {
     position: fixed;
     top: 20%;
@@ -159,13 +159,16 @@ body {
     padding: 25px 40px;
     box-shadow: 0 10px 40px rgba(0,0,0,0.2);
     opacity: 0;
+    display: none;
     z-index: 200;
     min-width: 280px;
     text-align: center;
+    transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
 .speech-bubble.show {
-    animation: bubblePop 0.5s ease-out 6.5s forwards;
+    opacity: 1;
+    display: block;
 }
 
 @keyframes bubblePop {
