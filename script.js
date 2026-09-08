@@ -61,49 +61,63 @@ const homeBtn = document.getElementById('homeBtn');
 // PLAYER DE ÁUDIO
 // ============================================
 const audioPlayer = {
-    openingMusic: new Audio('assets/audio/abertura.mp3'),
-    backgroundMusic: new Audio('assets/audio/trilha.mp3'),
-    
+    openingMusic: null,
+    backgroundMusic: null,
     isMuted: false,
     
     init() {
+        // Criar elementos de áudio
+        this.openingMusic = new Audio('assets/audio/abertura.mp3');
+        this.backgroundMusic = new Audio('assets/audio/trilha.mp3');
+        
         this.openingMusic.volume = 0.7;
         this.backgroundMusic.volume = 0.3;
         this.backgroundMusic.loop = true;
         
+        // Quando abertura terminar, iniciar trilha
         this.openingMusic.addEventListener('ended', () => {
+            console.log('🎵 Abertura terminou, iniciando trilha...');
             this.startBackground();
         });
         
-        // Tentar autoplay após interação do usuário
-        document.addEventListener('click', () => {
-            if (this.openingMusic.paused && this.backgroundMusic.paused) {
-                // Já está tocando ou já foi iniciado
-            }
-        }, { once: true });
+        this.openingMusic.addEventListener('error', (e) => {
+            console.error('❌ Erro ao carregar abertura:', e);
+        });
+        
+        this.backgroundMusic.addEventListener('error', (e) => {
+            console.error('❌ Erro ao carregar trilha:', e);
+        });
     },
     
     playOpening() {
         if (!this.isMuted) {
             this.openingMusic.currentTime = 0;
-            this.openingMusic.play().catch(err => {
-                console.log('️ Aguardando interação do usuário:', err);
-            });
+            this.openingMusic.play()
+                .then(() => console.log('🎵 Música de abertura tocando!'))
+                .catch(err => {
+                    console.warn('⚠️ Autoplay bloqueado:', err);
+                    console.log('👆 Aguardando interação do usuário...');
+                });
         }
     },
     
     startBackground() {
         if (!this.isMuted) {
+            // Parar abertura se ainda estiver tocando
+            this.openingMusic.pause();
+            this.openingMusic.currentTime = 0;
+            
+            // Iniciar trilha
             this.backgroundMusic.currentTime = 0;
-            this.backgroundMusic.play().catch(err => {
-                console.log('⚠️ Background blocked:', err);
-            });
+            this.backgroundMusic.play()
+                .then(() => console.log('🎵 Trilha de fundo tocando!'))
+                .catch(err => console.warn('⚠️ Trilha bloqueada:', err));
         }
     },
     
-    stopBackground() {
+    stopAll() {
+        this.openingMusic.pause();
         this.backgroundMusic.pause();
-        this.backgroundMusic.currentTime = 0;
     },
     
     toggleMute() {
@@ -112,8 +126,11 @@ const audioPlayer = {
             this.openingMusic.pause();
             this.backgroundMusic.pause();
         } else {
-            if (!this.openingMusic.paused) this.openingMusic.play();
-            else if (!this.backgroundMusic.paused) this.backgroundMusic.play();
+            if (gameScreen.classList.contains('active')) {
+                this.startBackground();
+            } else {
+                this.playOpening();
+            }
         }
         return this.isMuted;
     }
@@ -122,10 +139,12 @@ const audioPlayer = {
 audioPlayer.init();
 
 // ============================================
-// SEQUÊNCIA DA CAPA (AUTOPLAY)
+// SEQUÊNCIA DA CAPA
 // ============================================
 window.addEventListener('load', () => {
-    // Iniciar música automaticamente
+    console.log('🎮 Jogo carregado, iniciando sequência...');
+    
+    // Tentar tocar música após 500ms
     setTimeout(() => {
         audioPlayer.playOpening();
     }, 500);
@@ -138,7 +157,7 @@ window.addEventListener('load', () => {
                 setTimeout(() => {
                     document.getElementById('speechText').textContent = "Let's play!";
                     speak("Let's play!");
-                }, 800);
+                }, 2000); // 2 segundos entre frases
             });
         }, 3500);
     }, 500);
@@ -155,8 +174,8 @@ window.addEventListener('load', () => {
 // BOTÃO SKIP
 // ============================================
 skipBtn.addEventListener('click', () => {
-    audioPlayer.openingMusic.pause();
-    audioPlayer.openingMusic.currentTime = 0;
+    console.log('️ Pulando abertura...');
+    audioPlayer.stopAll();
     
     document.querySelector('.logo-screen').style.display = 'none';
     document.querySelector('.city-screen').style.display = 'none';
@@ -175,10 +194,16 @@ skipBtn.addEventListener('click', () => {
 // INICIAR JOGO
 // ============================================
 startBtn.addEventListener('click', () => {
+    console.log('🎮 Iniciando jogo...');
     gameScreen.classList.add('active');
     skipBtn.style.display = 'none';
-    audioPlayer.stopBackground();
-    audioPlayer.startBackground();
+    
+    // Cortar música de entrada e iniciar trilha
+    audioPlayer.stopAll();
+    setTimeout(() => {
+        audioPlayer.startBackground();
+    }, 300);
+    
     loadLevel(0);
 });
 
@@ -196,7 +221,7 @@ function loadLevel(levelIndex) {
         speak(`Let's play ${level.name}!`, () => {
             setTimeout(() => {
                 loadRound();
-            }, 500);
+            }, 2000); // 2 segundos de pausa
         });
     }, 500);
 }
@@ -235,26 +260,39 @@ function loadRound() {
     // Falar a pergunta e depois pronunciar cada item com zoom
     setTimeout(() => {
         speak(`Where is the ${currentItem.word}?`, () => {
-            // Pronunciar cada item com zoom sincronizado
-            roundItems.forEach((item, index) => {
-                setTimeout(() => {
-                    const card = currentCards[index];
-                    if (card) {
-                        // Adicionar classe de zoom
-                        card.classList.add('speaking');
-                        
-                        // Falar a palavra
+            // Aguardar 2 segundos antes de pronunciar os itens
+            setTimeout(() => {
+                pronounceItems(roundItems);
+            }, 2000);
+        });
+    }, 500);
+}
+
+// ============================================
+// PRONUNCIAR ITENS COM ZOOM
+// ============================================
+function pronounceItems(items) {
+    items.forEach((item, index) => {
+        setTimeout(() => {
+            const card = currentCards[index];
+            if (card) {
+                // Adicionar classe de zoom
+                card.classList.add('speaking');
+                
+                // Falar a palavra 2 vezes
+                speak(item.word, () => {
+                    setTimeout(() => {
                         speak(item.word, () => {
-                            // Remover classe após animação
+                            // Remover classe após segunda pronúncia
                             setTimeout(() => {
                                 card.classList.remove('speaking');
                             }, 600);
                         });
-                    }
-                }, index * 1500); // 1.5s entre cada palavra
-            });
-        }, true); // Repetir pergunta
-    }, 500);
+                    }, 500); // 0.5s entre as repetições
+                });
+            }
+        }, index * 3000); // 3 segundos entre cada item (2 pronúncias + pausa)
+    });
 }
 
 // ============================================
@@ -271,7 +309,7 @@ function handleAnswer(selected, card, event) {
         bubuSpeech.textContent = `${selected.word}! Great job!`;
         
         // Repetir a palavra correta várias vezes
-        speak(`${selected.word}! ${selected.word}! Great job! ${selected.word}!`, () => {
+        speak(`${selected.word}! ${selected.word}! Great job!`, () => {
             setTimeout(() => {
                 createConfetti();
                 
@@ -279,16 +317,20 @@ function handleAnswer(selected, card, event) {
                     showCongratulations();
                 }, 1500);
             }, 1000);
-        }, true); // Repetir
+        });
         
     } else {
         card.classList.add('wrong');
         bubuSpeech.textContent = 'Try again!';
         speak('Try again! You can do it!', () => {
-            // Repetir a pergunta novamente
+            // Repetir a pergunta novamente após 2 segundos
             setTimeout(() => {
-                speak(`Where is the ${currentItem.word}?`, null, true);
-            }, 500);
+                speak(`Where is the ${currentItem.word}?`, () => {
+                    setTimeout(() => {
+                        pronounceItems([currentItem]);
+                    }, 2000);
+                });
+            }, 2000);
         });
         
         setTimeout(() => {
@@ -333,17 +375,12 @@ soundBtn.addEventListener('click', () => {
     if (currentItem) {
         // Repetir pergunta e itens
         speak(`Where is the ${currentItem.word}?`, () => {
-            currentCards.forEach((card, index) => {
-                setTimeout(() => {
-                    card.classList.add('speaking');
-                    speak(card.dataset.word, () => {
-                        setTimeout(() => {
-                            card.classList.remove('speaking');
-                        }, 600);
-                    });
-                }, index * 1500);
-            });
-        }, true);
+            setTimeout(() => {
+                pronounceItems(currentCards.map(card => ({
+                    word: card.dataset.word
+                })));
+            }, 2000);
+        });
     }
 });
 
@@ -354,14 +391,12 @@ homeBtn.addEventListener('click', () => {
 });
 
 // ============================================
-// ÁUDIO (Text-to-Speech) - SEMPRE REPETE
+// ÁUDIO (Text-to-Speech)
 // ============================================
-function speak(text, callback, alwaysRepeat = false) {
+function speak(text, callback) {
     synth.cancel();
     
-    const repeatText = alwaysRepeat ? `${text} ${text}` : text;
-    
-    const utterance = new SpeechSynthesisUtterance(repeatText);
+    const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     utterance.rate = 0.8; // Mais lento para crianças
     utterance.pitch = 1.3;
