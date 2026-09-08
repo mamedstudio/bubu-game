@@ -62,7 +62,7 @@ const homeBtn = document.getElementById('homeBtn');
 const speechText = document.getElementById('speechText');
 
 // ============================================
-// PLAYER DE ÁUDIO (MÚSICAS)
+// PLAYER DE ÁUDIO
 // ============================================
 const audioPlayer = {
     openingMusic: null,
@@ -103,7 +103,7 @@ const audioPlayer = {
             
             this.backgroundMusic.currentTime = 0;
             this.backgroundMusic.play()
-                .then(() => console.log('🎵 Trilha tocando!'))
+                .then(() => console.log(' Trilha tocando!'))
                 .catch(err => console.warn('⚠️ Trilha bloqueada:', err));
         }
     },
@@ -116,7 +116,7 @@ const audioPlayer = {
     restartBackground() {
         if (!this.isMuted) {
             this.backgroundMusic.currentTime = 0;
-            this.backgroundMusic.play().catch(err => console.warn('️ Trilha:', err));
+            this.backgroundMusic.play().catch(err => console.warn('⚠️ Trilha:', err));
         }
     }
 };
@@ -127,7 +127,6 @@ audioPlayer.init();
 // FUNÇÕES DE ÁUDIO
 // ============================================
 
-// Fala normal (sem repetição)
 function speak(text, callback) {
     synth.cancel();
     
@@ -143,7 +142,6 @@ function speak(text, callback) {
     synth.speak(utterance);
 }
 
-// Fala objeto (repete 2x)
 function speakObject(word, card, callback) {
     synth.cancel();
     
@@ -175,7 +173,6 @@ function speakObject(word, card, callback) {
     synth.speak(utterance);
 }
 
-// Fala pergunta (repete 2x)
 function speakQuestion(text, callback) {
     synth.cancel();
     
@@ -203,7 +200,7 @@ function speakQuestion(text, callback) {
 }
 
 // ============================================
-// BOTÃO PLAY INICIAL
+// BOTÃO PLAY
 // ============================================
 playBtn.addEventListener('click', () => {
     playOverlay.style.display = 'none';
@@ -222,28 +219,32 @@ function startIntroSequence() {
     // 0.5s: Música começa
     // 2.5s: Logo desaparece
     // 3.5s: BUBU começa a andar
-    // 6.5s: BUBU para, balão aparece, fala "Hi! I'm BUBU!"
-    // 8.5s: Muda para "Let's play!"
+    // 6.5s: BUBU para, balão aparece
     
-    // Mostrar balão e sincronizar com áudio
     setTimeout(() => {
-        // Mostra balão
+        // 6.5s: Mostra balão
         document.querySelector('.speech-bubble').classList.add('show');
         
-        // SINCRONIZAÇÃO: Muda texto e fala AO MESMO TEMPO
-        speechText.textContent = "Hi! I'm BUBU!";
-        
-        // Pequeno delay para garantir que o balão apareceu
+        // SINCRONIZAÇÃO PERFEITA:
+        // Atualiza legenda E fala no MESMO INSTANTE
         setTimeout(() => {
+            // Atualiza texto IMEDIATAMENTE
+            speechText.textContent = "Hi! I'm BUBU!";
+            
+            // Fala IMEDIATAMENTE (mesmo instante - delay 0)
             speak("Hi! I'm BUBU!", () => {
-                // Quando termina de falar "Hi! I'm BUBU!"
+                // Quando termina "Hi! I'm BUBU!"
                 setTimeout(() => {
+                    // Atualiza legenda IMEDIATAMENTE
                     speechText.textContent = "Let's play!";
+                    
+                    // Fala IMEDIATAMENTE (mesmo instante)
                     speak("Let's play!");
                 }, 1000);
             });
-        }, 300);
-    }, 6500); // 6.5s - quando BUBU para de andar
+        }, 300); // Pequeno delay para balão aparecer
+        
+    }, 6500); // 6.5s - quando BUBU para
     
     // Auto-pulo após 16s
     setTimeout(() => {
@@ -324,7 +325,6 @@ function loadRound() {
     roundItems = shuffled.slice(0, 3);
     currentItem = roundItems[Math.floor(Math.random() * 3)];
     
-    // "Let's go!" apenas UMA VEZ
     speak("Let's go!", () => {
         setTimeout(() => {
             showAndPronounceItem(0);
@@ -370,7 +370,7 @@ function showAndPronounceItem(index) {
 }
 
 // ============================================
-// DEIXAR TODOS OS CARDS CLICÁVEIS
+// DEIXAR CARDS CLICÁVEIS
 // ============================================
 function makeAllCardsClickable() {
     currentCards.forEach(card => {
@@ -384,7 +384,7 @@ function makeAllCardsClickable() {
 }
 
 // ============================================
-// FAZER A PERGUNTA
+// FAZER PERGUNTA
 // ============================================
 function askQuestion() {
     isAnswering = true;
