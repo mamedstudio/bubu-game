@@ -42,8 +42,7 @@ let currentItem = null;
 let isAnswering = false;
 let synth = window.speechSynthesis;
 let currentCards = [];
-let audioQueue = []; // Fila de áudios sequenciais
-let isSpeaking = false;
+let isProcessingAudio = false;
 
 // Elementos DOM
 const startBtn = document.getElementById('startBtn');
@@ -76,16 +75,8 @@ const audioPlayer = {
         this.backgroundMusic.loop = true;
         
         this.openingMusic.addEventListener('ended', () => {
-            console.log('🎵 Abertura terminou, iniciando trilha...');
+            console.log('🎵 Abertura terminou');
             this.startBackground();
-        });
-        
-        this.openingMusic.addEventListener('error', (e) => {
-            console.error('❌ Erro abertura:', e);
-        });
-        
-        this.backgroundMusic.addEventListener('error', (e) => {
-            console.error('❌ Erro trilha:', e);
         });
     },
     
@@ -94,7 +85,9 @@ const audioPlayer = {
             this.openingMusic.currentTime = 0;
             this.openingMusic.play()
                 .then(() => console.log('🎵 Abertura tocando!'))
-                .catch(err => console.warn('️ Autoplay bloqueado:', err));
+                .catch(err => {
+                    console.warn('⚠️ Autoplay bloqueado - aguardando interação');
+                });
         }
     },
     
@@ -113,126 +106,100 @@ const audioPlayer = {
     stopAll() {
         this.openingMusic.pause();
         this.backgroundMusic.pause();
-    },
-    
-    toggleMute() {
-        this.isMuted = !this.isMuted;
-        if (this.isMuted) {
-            this.openingMusic.pause();
-            this.backgroundMusic.pause();
-        } else {
-            if (gameScreen.classList.contains('active')) {
-                this.startBackground();
-            } else {
-                this.playOpening();
-            }
-        }
-        return this.isMuted;
     }
 };
 
 audioPlayer.init();
 
 // ============================================
-// SISTEMA DE FILA DE ÁUDIO SEQUENCIAL
+// SISTEMA DE ÁUDIO SIMPLES E CONFIÁVEL
 // ============================================
-function speakSequential(text, options = {}) {
-    return new Promise((resolve) => {
-        const {
-            onSpeak,      // Callback quando começa a falar
-            onEnd,        // Callback quando termina
-            repeat = false, // Se deve repetir 2x
-            pauseAfter = 500 // Pausa após terminar (ms)
-        } = options;
-        
-        const doSpeak = (textToSpeak, isLast) => {
-            const utterance = new SpeechSynthesisUtterance(textToSpeak);
-            utterance.lang = 'en-US';
-            utterance.rate = 0.8;
-            utterance.pitch = 1.3;
-            
-            utterance.onstart = () => {
-                if (onSpeak) onSpeak();
-            };
-            
-            utterance.onend = () => {
-                if (isLast) {
-                    setTimeout(() => {
-                        isSpeaking = false;
-                        processQueue();
-                        if (onEnd) onEnd();
-                        resolve();
-                    }, pauseAfter);
-                } else {
-                    // Ainda tem repetição
-                    setTimeout(() => {
-                        doSpeak(textToSpeak, true);
-                    }, 500); // 500ms entre repetições
-                }
-            };
-            
-            synth.speak(utterance);
-        };
-        
-        audioQueue.push(() => doSpeak(text, !repeat));
-        processQueue();
-    });
-}
-
-function processQueue() {
-    if (isSpeaking || audioQueue.length === 0) return;
+function speak(text, callback, options = {}) {
+    const {
+        repeat = false,
+        onSpeak = null,
+        delay = 0
+    } = options;
     
-    isSpeaking = true;
-    const next = audioQueue.shift();
-    next();
-}
-
-function clearQueue() {
-    audioQueue = [];
+    // Cancela áudio anterior
     synth.cancel();
-    isSpeaking = false;
-}
-
-// Fala simples (para casos únicos)
-function speak(text, callback) {
-    clearQueue();
     
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
     utterance.rate = 0.8;
     utterance.pitch = 1.3;
     
-    if (callback) {
-        utterance.onend = callback;
+    utterance.onstart = () => {
+        if (onSpeak) onSpeak();
+    };
+    
+    utterance.onend = () => {
+        if (repeat) {
+            // Repete uma vez após 500ms
+            setTimeout(() => {
+                const repeatUtterance = new SpeechSynthesisUtterance(text);
+                repeatUtterance.lang = 'en-US';
+                repeatUtterance.rate = 0.8;
+                repeatUtterance.pitch = 1.3;
+                repeatUtterance.onend = () => {
+                    if (callback) callback();
+                };
+                synth.speak(repeatUtterance);
+            }, 500);
+        } else {
+            if (callback) callback();
+        }
+    };
+    
+    setTimeout(() => {
+        synth.speak(utterance);
+    }, delay);
+}
+
+// Fala sequencial com delay garantido
+function speakWithDelay(texts, callback, index = 0) {
+    if (index >= texts.length) {
+        if (callback) callback();
+        return;
     }
     
-    synth.speak(utterance);
+    const current = texts[index];
+    speak(current.text, () => {
+        setTimeout(() => {
+            speakWithDelay(texts, callback, index + 1);
+        }, current.delay || 1500);
+    }, current.options || {});
 }
 
 // ============================================
-// SEQUÊNCIA DA CAPA
+// SEQUÊNCIA DA CAPA (CORRIGIDA)
 // ============================================
 window.addEventListener('load', () => {
     console.log('🎮 Jogo carregado!');
     
-    setTimeout(() => {
-        audioPlayer.playOpening();
-    }, 500);
+    // Tenta tocar música após clique em qualquer lugar
+    document.addEventListener('click', () => {
+        if (audioPlayer.openingMusic.paused && !gameScreen.classList.contains('active')) {
+            audioPlayer.playOpening();
+        }
+    }, { once: true });
     
-    // Sequência da animação com áudio sequencial
+    // Sequência da animação
     setTimeout(() => {
+        // 6.5s: BUBU para e aparece
         setTimeout(() => {
             document.querySelector('.speech-bubble').classList.add('show');
             
-            speakSequential("Hi! I'm BUBU!", {
-                pauseAfter: 2000,
-                onEnd: () => {
-                    document.getElementById('speechText').textContent = "Let's play!";
-                    speakSequential("Let's play!", {
-                        pauseAfter: 1000
-                    });
-                }
-            });
+            // Fala "Hi! I'm BUBU!" sincronizado com o balão
+            setTimeout(() => {
+                speak("Hi! I'm BUBU!", () => {
+                    // 2 segundos depois, fala "Let's play!"
+                    setTimeout(() => {
+                        document.getElementById('speechText').textContent = "Let's play!";
+                        speak("Let's play!");
+                    }, 2000);
+                }, { repeat: false });
+            }, 300); // Pequeno delay para o balão aparecer
         }, 3500);
     }, 500);
     
@@ -248,8 +215,8 @@ window.addEventListener('load', () => {
 // BOTÃO SKIP
 // ============================================
 skipBtn.addEventListener('click', () => {
-    console.log('⏭️ Pulando...');
-    clearQueue();
+    console.log('️ Pulando...');
+    synth.cancel();
     audioPlayer.stopAll();
     
     document.querySelector('.logo-screen').style.display = 'none';
@@ -291,13 +258,12 @@ function loadLevel(levelIndex) {
     gameScreen.style.background = level.background;
     levelIndicator.textContent = `Level ${levelIndex + 1}: ${level.name}`;
     
-    clearQueue();
+    synth.cancel();
     
-    speakSequential(`Let's play ${level.name}!`, {
-        pauseAfter: 2000,
-        onEnd: () => {
+    speak(`Let's play ${level.name}!`, () => {
+        setTimeout(() => {
             loadRound();
-        }
+        }, 2000);
     });
 }
 
@@ -308,7 +274,7 @@ function loadRound() {
     isAnswering = true;
     cardsContainer.innerHTML = '';
     currentCards = [];
-    clearQueue();
+    synth.cancel();
     
     const level = levels[currentLevel];
     const shuffled = [...level.items].sort(() => Math.random() - 0.5);
@@ -333,52 +299,45 @@ function loadRound() {
         cardsContainer.appendChild(card);
     });
     
-    // Falar pergunta e depois pronunciar itens
+    // Falar pergunta
     setTimeout(() => {
-        speakSequential(`Where is the ${currentItem.word}?`, {
-            repeat: true,
-            pauseAfter: 2000,
-            onEnd: () => {
-                pronounceItemsSequential(roundItems);
-            }
-        });
+        speak(`Where is the ${currentItem.word}?`, () => {
+            // Após 2s, pronunciar cada item
+            setTimeout(() => {
+                pronounceItemsOneByOne(roundItems, 0);
+            }, 2000);
+        }, { repeat: true });
     }, 500);
 }
 
 // ============================================
-// PRONUNCIAR ITENS SEQUENCIALMENTE COM ZOOM
+// PRONUNCIAR ITENS UM POR UM (SIMPLES)
 // ============================================
-function pronounceItemsSequential(items) {
-    let index = 0;
+function pronounceItemsOneByOne(items, index) {
+    if (index >= items.length) return;
     
-    function speakNext() {
-        if (index >= items.length) return;
+    const item = items[index];
+    const card = currentCards[index];
+    
+    if (card) {
+        // Zoom quando começa a falar
+        card.classList.add('speaking');
         
-        const item = items[index];
-        const card = currentCards[index];
-        
-        if (card) {
-            speakSequential(item.word, {
-                repeat: true,
-                pauseAfter: 1500,
-                onSpeak: () => {
-                    // ZOOM EXATO quando começa a falar
-                    card.classList.add('speaking');
-                },
-                onEnd: () => {
-                    // Remove zoom após terminar
-                    card.classList.remove('speaking');
-                    index++;
-                    setTimeout(speakNext, 500);
-                }
-            });
-        } else {
-            index++;
-            speakNext();
-        }
+        speak(item.word, () => {
+            // Remove zoom
+            setTimeout(() => {
+                card.classList.remove('speaking');
+                
+                // Próximo item após 1.5s
+                setTimeout(() => {
+                    pronounceItemsOneByOne(items, index + 1);
+                }, 1500);
+            }, 600);
+        }, { repeat: true });
+    } else {
+        // Pula se não tiver card
+        pronounceItemsOneByOne(items, index + 1);
     }
-    
-    speakNext();
 }
 
 // ============================================
@@ -389,23 +348,22 @@ function handleAnswer(selected, card, event) {
     
     if (selected.word === currentItem.word) {
         isAnswering = false;
-        clearQueue();
+        synth.cancel();
         
         card.classList.add('correct');
         bubuGame.classList.add('celebrate');
         
         bubuSpeech.textContent = `${selected.word}! Great job!`;
         
-        speakSequential(`${selected.word}! ${selected.word}! Great job!`, {
-            repeat: true,
-            pauseAfter: 1500,
-            onEnd: () => {
+        speak(`${selected.word}! Great job!`, () => {
+            setTimeout(() => {
                 createConfetti();
+                
                 setTimeout(() => {
                     showCongratulations();
                 }, 1500);
-            }
-        });
+            }, 1000);
+        }, { repeat: true });
         
     } else {
         card.classList.add('wrong');
@@ -413,25 +371,19 @@ function handleAnswer(selected, card, event) {
         
         speak('Try again! You can do it!', () => {
             setTimeout(() => {
-                clearQueue();
-                speakSequential(`Where is the ${currentItem.word}?`, {
-                    repeat: true,
-                    pauseAfter: 1500,
-                    onEnd: () => {
-                        // Pronunciar só o item correto
-                        const correctCard = currentCards.find(c => c.dataset.word === currentItem.word);
-                        if (correctCard) {
-                            correctCard.classList.add('speaking');
-                            speakSequential(currentItem.word, {
-                                repeat: true,
-                                pauseAfter: 1000,
-                                onEnd: () => {
-                                    correctCard.classList.remove('speaking');
-                                }
-                            });
-                        }
+                // Repete a pergunta
+                speak(`Where is the ${currentItem.word}?`, () => {
+                    // Destaca o item correto
+                    const correctCard = currentCards.find(c => c.dataset.word === currentItem.word);
+                    if (correctCard) {
+                        correctCard.classList.add('speaking');
+                        speak(currentItem.word, () => {
+                            setTimeout(() => {
+                                correctCard.classList.remove('speaking');
+                            }, 600);
+                        }, { repeat: true });
                     }
-                });
+                }, { repeat: true });
             }, 2000);
         });
         
@@ -448,10 +400,7 @@ function showCongratulations() {
     congratsText.textContent = `You completed Level ${currentLevel + 1}!`;
     congratsScreen.classList.add('active');
     
-    speakSequential('Congratulations! Congratulations!', {
-        repeat: false,
-        pauseAfter: 1000
-    });
+    speak('Congratulations!', null, { repeat: true });
 }
 
 // ============================================
@@ -460,21 +409,17 @@ function showCongratulations() {
 nextLevelBtn.addEventListener('click', () => {
     congratsScreen.classList.remove('active');
     bubuGame.classList.remove('celebrate');
-    clearQueue();
+    synth.cancel();
     
     if (currentLevel < levels.length - 1) {
         loadLevel(currentLevel + 1);
     } else {
         congratsText.textContent = 'You completed all levels!';
         congratsScreen.classList.add('active');
-        speakSequential('You completed all levels! Amazing! Amazing!', {
-            repeat: false,
-            pauseAfter: 2000,
-            onEnd: () => {
-                setTimeout(() => {
-                    location.reload();
-                }, 3000);
-            }
+        speak('You completed all levels! Amazing!', () => {
+            setTimeout(() => {
+                location.reload();
+            }, 3000);
         });
     }
 });
@@ -484,14 +429,12 @@ nextLevelBtn.addEventListener('click', () => {
 // ============================================
 soundBtn.addEventListener('click', () => {
     if (currentItem) {
-        clearQueue();
-        speakSequential(`Where is the ${currentItem.word}?`, {
-            repeat: true,
-            pauseAfter: 2000,
-            onEnd: () => {
-                pronounceItemsSequential(currentCards.map(c => ({ word: c.dataset.word })));
-            }
-        });
+        synth.cancel();
+        speak(`Where is the ${currentItem.word}?`, () => {
+            setTimeout(() => {
+                pronounceItemsOneByOne(currentCards.map(c => ({ word: c.dataset.word })), 0);
+            }, 2000);
+        }, { repeat: true });
     }
 });
 
