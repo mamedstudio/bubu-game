@@ -59,6 +59,7 @@ const congratsText = document.getElementById('congratsText');
 const nextLevelBtn = document.getElementById('nextLevelBtn');
 const soundBtn = document.getElementById('soundBtn');
 const homeBtn = document.getElementById('homeBtn');
+const speechBubble = document.getElementById('speechBubble');
 const speechText = document.getElementById('speechText');
 
 // ============================================
@@ -90,7 +91,7 @@ const audioPlayer = {
         if (!this.isMuted) {
             this.openingMusic.currentTime = 0;
             this.openingMusic.play()
-                .then(() => console.log('🎵 Abertura tocando!'))
+                .then(() => console.log(' Abertura tocando!'))
                 .catch(err => console.warn('⚠️ Autoplay bloqueado:', err));
         }
     },
@@ -103,7 +104,7 @@ const audioPlayer = {
             
             this.backgroundMusic.currentTime = 0;
             this.backgroundMusic.play()
-                .then(() => console.log(' Trilha tocando!'))
+                .then(() => console.log('🎵 Trilha tocando!'))
                 .catch(err => console.warn('⚠️ Trilha bloqueada:', err));
         }
     },
@@ -214,37 +215,27 @@ playBtn.addEventListener('click', () => {
 function startIntroSequence() {
     console.log('🎬 Iniciando sequência da capa...');
     
-    // Timeline:
-    // 0s: Play clicado
-    // 0.5s: Música começa
-    // 2.5s: Logo desaparece
-    // 3.5s: BUBU começa a andar
-    // 6.5s: BUBU para, balão aparece
+    // IMPORTANTE: Esconder balão primeiro (remover animação CSS)
+    speechBubble.style.opacity = '0';
+    speechBubble.style.display = 'none';
     
+    // 6.5s: BUBU para de andar (animação CSS)
     setTimeout(() => {
-        // 6.5s: Mostra balão
-        document.querySelector('.speech-bubble').classList.add('show');
+        // MOSTRAR balão IMEDIATAMENTE (sem animação CSS)
+        speechBubble.style.display = 'block';
+        speechBubble.style.opacity = '1';
+        speechBubble.style.transform = 'translateX(-50%) scale(1)';
         
-        // SINCRONIZAÇÃO PERFEITA:
-        // Atualiza legenda E fala no MESMO INSTANTE
-        setTimeout(() => {
-            // Atualiza texto IMEDIATAMENTE
-            speechText.textContent = "Hi! I'm BUBU!";
-            
-            // Fala IMEDIATAMENTE (mesmo instante - delay 0)
-            speak("Hi! I'm BUBU!", () => {
-                // Quando termina "Hi! I'm BUBU!"
-                setTimeout(() => {
-                    // Atualiza legenda IMEDIATAMENTE
-                    speechText.textContent = "Let's play!";
-                    
-                    // Fala IMEDIATAMENTE (mesmo instante)
-                    speak("Let's play!");
-                }, 1000);
-            });
-        }, 300); // Pequeno delay para balão aparecer
-        
-    }, 6500); // 6.5s - quando BUBU para
+        // SINCRONIZAÇÃO: Texto + Áudio no mesmo instante
+        speechText.textContent = "Hi! I'm BUBU!";
+        speak("Hi! I'm BUBU!", () => {
+            // Quando termina, espera 1s e muda
+            setTimeout(() => {
+                speechText.textContent = "Let's play!";
+                speak("Let's play!");
+            }, 1000);
+        });
+    }, 6500);
     
     // Auto-pulo após 16s
     setTimeout(() => {
@@ -266,7 +257,7 @@ skipBtn.addEventListener('click', () => {
     document.querySelector('.city-screen').style.display = 'none';
     document.querySelector('.bubu-walking').style.display = 'none';
     document.querySelector('.bubu-standing').style.display = 'none';
-    document.querySelector('.speech-bubble').style.display = 'none';
+    speechBubble.style.display = 'none';
     document.getElementById('startBtn').style.display = 'none';
     skipBtn.style.display = 'none';
     
@@ -304,6 +295,9 @@ function loadLevel(levelIndex) {
     
     synth.cancel();
     
+    // Esconder balão do BUBU no jogo
+    bubuSpeech.parentElement.style.display = 'none';
+    
     speak(`Let's play ${level.name}!`, () => {
         setTimeout(() => {
             loadRound();
@@ -325,6 +319,9 @@ function loadRound() {
     roundItems = shuffled.slice(0, 3);
     currentItem = roundItems[Math.floor(Math.random() * 3)];
     
+    // Esconder balão da pergunta
+    bubuSpeech.parentElement.style.display = 'none';
+    
     speak("Let's go!", () => {
         setTimeout(() => {
             showAndPronounceItem(0);
@@ -333,10 +330,12 @@ function loadRound() {
 }
 
 // ============================================
-// MOSTRAR E PRONUNCIAR ITEM
+// MOSTRAR E PRONUNCIAR ITEM (SEM PERGUNTA AINDA)
 // ============================================
 function showAndPronounceItem(index) {
     if (index >= roundItems.length) {
+        // TODOS os 3 cards apareceram e foram pronunciados
+        // AGORA sim mostra a pergunta
         setTimeout(() => {
             makeAllCardsClickable();
             askQuestion();
@@ -384,12 +383,16 @@ function makeAllCardsClickable() {
 }
 
 // ============================================
-// FAZER PERGUNTA
+// FAZER PERGUNTA (SÓ DEPOIS DOS 3 CARDS)
 // ============================================
 function askQuestion() {
     isAnswering = true;
-    bubuSpeech.textContent = `Where is the ${currentItem.word}?`;
     
+    // MOSTRAR balão com a pergunta
+    bubuSpeech.textContent = `Where is the ${currentItem.word}?`;
+    bubuSpeech.parentElement.style.display = 'block';
+    
+    // Falar pergunta
     speakQuestion(`Where is the ${currentItem.word}?`);
 }
 
