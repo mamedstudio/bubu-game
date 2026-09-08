@@ -13,6 +13,43 @@ body {
     touch-action: manipulation;
 }
 
+/* PLAY OVERLAY */
+.play-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(255, 255, 255, 0.95);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 3000;
+}
+
+.play-btn {
+    background: linear-gradient(135deg, #FF6B6B 0%, #FFA07A 100%);
+    color: white;
+    border: none;
+    padding: 30px 60px;
+    font-size: 2.5rem;
+    font-weight: bold;
+    border-radius: 50px;
+    cursor: pointer;
+    box-shadow: 0 10px 30px rgba(255, 107, 107, 0.4);
+    font-family: 'Comic Sans MS', sans-serif;
+    animation: pulse 2s ease-in-out infinite;
+}
+
+.play-btn:hover {
+    transform: scale(1.1);
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
 /* CAPA - LOGO */
 .logo-screen {
     position: fixed;
@@ -92,10 +129,7 @@ body {
 }
 
 @keyframes hideWalking {
-    to {
-        opacity: 0;
-        visibility: hidden;
-    }
+    to { opacity: 0; visibility: hidden; }
 }
 
 .bubu-standing {
@@ -171,11 +205,6 @@ body {
     to { opacity: 1; }
 }
 
-@keyframes pulse {
-    0%, 100% { transform: translateX(-50%) scale(1); }
-    50% { transform: translateX(-50%) scale(1.05); }
-}
-
 /* BOTÃO SKIP */
 .skip-btn {
     position: fixed;
@@ -190,12 +219,6 @@ body {
     cursor: pointer;
     z-index: 1000;
     font-family: 'Comic Sans MS', sans-serif;
-    transition: all 0.3s ease;
-}
-
-.skip-btn:hover {
-    background: #FF6B6B;
-    color: white;
 }
 
 /* TELA DO JOGO */
@@ -260,6 +283,7 @@ body {
     flex-wrap: wrap;
     padding: 20px;
     margin-top: 30px;
+    min-height: 200px;
 }
 
 .card {
@@ -292,9 +316,14 @@ body {
     100% { transform: scale(1); }
 }
 
-.card:hover, .card:active {
+.card.clickable:hover, .card.clickable:active {
     transform: translateY(-10px) scale(1.05);
     box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+.card.not-clickable {
+    cursor: default;
+    pointer-events: none;
 }
 
 .card img {
@@ -306,12 +335,12 @@ body {
 
 /* ZOOM quando pronunciar */
 .card.speaking img {
-    animation: wordZoom 0.6s ease;
+    animation: wordZoom 0.8s ease;
 }
 
 @keyframes wordZoom {
     0%, 100% { transform: scale(1); }
-    50% { transform: scale(1.3); }
+    50% { transform: scale(1.4); }
 }
 
 .card.correct {
@@ -430,12 +459,10 @@ body {
     cursor: pointer;
     box-shadow: 0 8px 25px rgba(76, 175, 80, 0.4);
     font-family: 'Comic Sans MS', sans-serif;
-    transition: all 0.3s ease;
 }
 
 .next-level-btn:hover {
     transform: scale(1.05);
-    box-shadow: 0 12px 35px rgba(76, 175, 80, 0.6);
 }
 
 .confetti {
@@ -470,19 +497,22 @@ body {
     box-shadow: 0 5px 20px rgba(0,0,0,0.2);
     cursor: pointer;
     font-size: 1.5rem;
-    transition: all 0.3s ease;
 }
 
 .control-btn:hover, .control-btn:active {
     transform: scale(1.1);
-    box-shadow: 0 8px 30px rgba(0,0,0,0.3);
 }
 
 /* RESPONSIVO MOBILE */
 @media (max-width: 768px) {
+    .play-btn {
+        padding: 25px 50px;
+        font-size: 2rem;
+    }
+
     .card {
-        width: 110px;
-        height: 110px;
+        width: 130px;
+        height: 130px;
     }
 
     .card img {
@@ -493,20 +523,20 @@ body {
     .bubu-walking,
     .bubu-standing,
     .bubu-game {
-        width: 140px;
-        height: 140px;
+        width: 150px;
+        height: 150px;
         bottom: 10%;
     }
 
     .bubu-walking {
-        background-size: 560px 140px;
+        background-size: 600px 150px;
     }
 
     @keyframes walkCycle {
         0%   { background-position: 0px 0; }
-        25%  { background-position: -140px 0; }
-        50%  { background-position: -280px 0; }
-        75%  { background-position: -420px 0; }
+        25%  { background-position: -150px 0; }
+        50%  { background-position: -300px 0; }
+        75%  { background-position: -450px 0; }
         100% { background-position: 0px 0; }
     }
 
@@ -560,9 +590,14 @@ body {
 }
 
 @media (max-width: 480px) {
+    .play-btn {
+        padding: 20px 40px;
+        font-size: 1.8rem;
+    }
+
     .card {
-        width: 95px;
-        height: 95px;
+        width: 100px;
+        height: 100px;
     }
 
     .cards-container {
@@ -604,5 +639,14 @@ body {
 
     .speech-text {
         font-size: 1.5rem;
+    }
+
+    .game-logo img {
+        height: 35px;
+    }
+
+    .level-indicator {
+        font-size: 1rem;
+        padding: 6px 15px;
     }
 }
