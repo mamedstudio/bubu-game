@@ -97,15 +97,15 @@ body {
     to { opacity: 1; }
 }
 
-/* BUBU ANDANDO */
+/* BUBU ANDANDO - MAIOR NO MOBILE */
 .bubu-walking {
     position: fixed;
     bottom: 15%;
-    left: -200px;
-    width: 200px;
-    height: 200px;
+    left: -250px;
+    width: 250px;
+    height: 250px;
     background-image: url('assets/characters/bubu-walk.webp');
-    background-size: 800px 200px;
+    background-size: 1000px 250px;
     background-repeat: no-repeat;
     background-position: 0 0;
     animation: 
@@ -116,15 +116,15 @@ body {
 }
 
 @keyframes walkAcross {
-    0% { left: -200px; }
-    100% { left: calc(50% - 100px); }
+    0% { left: -250px; }
+    100% { left: calc(50% - 125px); }
 }
 
 @keyframes walkCycle {
     0%   { background-position: 0px 0; }
-    25%  { background-position: -200px 0; }
-    50%  { background-position: -400px 0; }
-    75%  { background-position: -600px 0; }
+    25%  { background-position: -250px 0; }
+    50%  { background-position: -500px 0; }
+    75%  { background-position: -750px 0; }
     100% { background-position: 0px 0; }
 }
 
@@ -135,9 +135,9 @@ body {
 .bubu-standing {
     position: fixed;
     bottom: 15%;
-    left: calc(50% - 100px);
-    width: 200px;
-    height: 200px;
+    left: calc(50% - 125px);
+    width: 250px;
+    height: 250px;
     background: url('assets/characters/bubu-standing.webp') center/contain no-repeat;
     opacity: 0;
     animation: showBubu 0.5s ease-out 6.5s forwards;
@@ -282,7 +282,7 @@ body {
     align-items: center;
     justify-content: center;
     padding-top: 120px;
-    padding-bottom: 200px;
+    padding-bottom: 280px;
 }
 
 .cards-container {
@@ -510,7 +510,7 @@ body {
     transform: scale(1.1);
 }
 
-/* RESPONSIVO MOBILE - MUITO MAIOR */
+/* RESPONSIVO MOBILE - BUBU MUITO MAIOR */
 @media (max-width: 768px) {
     .play-btn {
         padding: 25px 50px;
@@ -529,30 +529,36 @@ body {
 
     .bubu-walking,
     .bubu-standing {
-        width: 180px;
-        height: 180px;
+        width: 250px;
+        height: 250px;
         bottom: 10%;
     }
 
     .bubu-game {
-        width: 200px;
-        height: 200px;
+        width: 250px;
+        height: 250px;
     }
 
     .bubu-walking {
-        background-size: 720px 180px;
+        background-size: 1000px 250px;
+        left: -250px;
+    }
+
+    @keyframes walkAcross {
+        0% { left: -250px; }
+        100% { left: calc(50% - 125px); }
     }
 
     @keyframes walkCycle {
         0%   { background-position: 0px 0; }
-        25%  { background-position: -180px 0; }
-        50%  { background-position: -360px 0; }
-        75%  { background-position: -540px 0; }
+        25%  { background-position: -250px 0; }
+        50%  { background-position: -500px 0; }
+        75%  { background-position: -750px 0; }
         100% { background-position: 0px 0; }
     }
 
     .speech-text {
-        font-size: 2rem;
+        font-size: 2.2rem;
     }
 
     .level-indicator {
@@ -586,7 +592,7 @@ body {
 
     .game-content {
         padding-top: 110px;
-        padding-bottom: 220px;
+        padding-bottom: 300px;
     }
 
     .cards-container {
@@ -618,25 +624,31 @@ body {
 
     .bubu-walking,
     .bubu-standing {
-        width: 160px;
-        height: 160px;
+        width: 220px;
+        height: 220px;
         bottom: 8%;
     }
 
     .bubu-game {
-        width: 180px;
-        height: 180px;
+        width: 220px;
+        height: 220px;
     }
 
     .bubu-walking {
-        background-size: 640px 160px;
+        background-size: 880px 220px;
+        left: -220px;
+    }
+
+    @keyframes walkAcross {
+        0% { left: -220px; }
+        100% { left: calc(50% - 110px); }
     }
 
     @keyframes walkCycle {
         0%   { background-position: 0px 0; }
-        25%  { background-position: -160px 0; }
-        50%  { background-position: -320px 0; }
-        75%  { background-position: -480px 0; }
+        25%  { background-position: -220px 0; }
+        50%  { background-position: -440px 0; }
+        75%  { background-position: -660px 0; }
         100% { background-position: 0px 0; }
     }
 
@@ -653,7 +665,7 @@ body {
     }
 
     .speech-text {
-        font-size: 1.6rem;
+        font-size: 1.8rem;
     }
 
     .game-logo img {
@@ -667,6 +679,6 @@ body {
 
     .game-content {
         padding-top: 100px;
-        padding-bottom: 200px;
+        padding-bottom: 280px;
     }
 }
