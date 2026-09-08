@@ -97,7 +97,7 @@ body {
     to { opacity: 1; }
 }
 
-/* BUBU ANDANDO - MAIOR NO MOBILE */
+/* BUBU ANDANDO */
 .bubu-walking {
     position: fixed;
     bottom: 15%;
@@ -180,17 +180,17 @@ body {
     color: #2196F3;
 }
 
-/* BOTÃO START */
+/* BOTÃO START - REPOSICIONADO */
 .start-btn {
     position: fixed;
-    bottom: 10%;
+    bottom: 5%;
     left: 50%;
     transform: translateX(-50%);
     background: linear-gradient(135deg, #FF6B6B 0%, #FFA07A 100%);
     color: white;
     border: none;
-    padding: 25px 60px;
-    font-size: 2.5rem;
+    padding: 20px 50px;
+    font-size: 2rem;
     font-weight: bold;
     border-radius: 50px;
     cursor: pointer;
@@ -510,7 +510,7 @@ body {
     transform: scale(1.1);
 }
 
-/* RESPONSIVO MOBILE - BUBU MUITO MAIOR */
+/* RESPONSIVO MOBILE */
 @media (max-width: 768px) {
     .play-btn {
         padding: 25px 50px;
@@ -529,31 +529,31 @@ body {
 
     .bubu-walking,
     .bubu-standing {
-        width: 250px;
-        height: 250px;
-        bottom: 10%;
+        width: 280px;
+        height: 280px;
+        bottom: 12%;
     }
 
     .bubu-game {
-        width: 250px;
-        height: 250px;
+        width: 260px;
+        height: 260px;
     }
 
     .bubu-walking {
-        background-size: 1000px 250px;
-        left: -250px;
+        background-size: 1120px 280px;
+        left: -280px;
     }
 
     @keyframes walkAcross {
-        0% { left: -250px; }
-        100% { left: calc(50% - 125px); }
+        0% { left: -280px; }
+        100% { left: calc(50% - 140px); }
     }
 
     @keyframes walkCycle {
         0%   { background-position: 0px 0; }
-        25%  { background-position: -250px 0; }
-        50%  { background-position: -500px 0; }
-        75%  { background-position: -750px 0; }
+        25%  { background-position: -280px 0; }
+        50%  { background-position: -560px 0; }
+        75%  { background-position: -840px 0; }
         100% { background-position: 0px 0; }
     }
 
@@ -581,9 +581,9 @@ body {
     }
 
     .start-btn {
-        font-size: 2rem;
-        padding: 20px 40px;
-        bottom: 8%;
+        font-size: 1.8rem;
+        padding: 18px 40px;
+        bottom: 3%;
     }
 
     .game-logo img {
@@ -592,7 +592,7 @@ body {
 
     .game-content {
         padding-top: 110px;
-        padding-bottom: 300px;
+        padding-bottom: 310px;
     }
 
     .cards-container {
@@ -613,8 +613,8 @@ body {
     }
 
     .card {
-        width: 130px;
-        height: 130px;
+        width: 140px;
+        height: 140px;
     }
 
     .cards-container {
@@ -624,31 +624,31 @@ body {
 
     .bubu-walking,
     .bubu-standing {
-        width: 220px;
-        height: 220px;
-        bottom: 8%;
+        width: 240px;
+        height: 240px;
+        bottom: 10%;
     }
 
     .bubu-game {
-        width: 220px;
-        height: 220px;
+        width: 230px;
+        height: 230px;
     }
 
     .bubu-walking {
-        background-size: 880px 220px;
-        left: -220px;
+        background-size: 960px 240px;
+        left: -240px;
     }
 
     @keyframes walkAcross {
-        0% { left: -220px; }
-        100% { left: calc(50% - 110px); }
+        0% { left: -240px; }
+        100% { left: calc(50% - 120px); }
     }
 
     @keyframes walkCycle {
         0%   { background-position: 0px 0; }
-        25%  { background-position: -220px 0; }
-        50%  { background-position: -440px 0; }
-        75%  { background-position: -660px 0; }
+        25%  { background-position: -240px 0; }
+        50%  { background-position: -480px 0; }
+        75%  { background-position: -720px 0; }
         100% { background-position: 0px 0; }
     }
 
@@ -679,6 +679,12 @@ body {
 
     .game-content {
         padding-top: 100px;
-        padding-bottom: 280px;
+        padding-bottom: 290px;
+    }
+
+    .start-btn {
+        font-size: 1.6rem;
+        padding: 15px 35px;
+        bottom: 2%;
     }
 }
