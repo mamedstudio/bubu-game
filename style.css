@@ -238,22 +238,20 @@ body {
     display: block;
 }
 
-.game-content {
-    position: relative;
+.game-header {
+    position: fixed;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 100%;
     display: flex;
     flex-direction: column;
     align-items: center;
-    padding-top: 100px;
+    gap: 10px;
+    padding: 15px;
+    z-index: 500;
 }
 
 .game-logo {
-    position: fixed;
-    top: 15px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 500;
     background: white;
     border-radius: 30px;
     padding: 10px 30px;
@@ -262,33 +260,43 @@ body {
 
 .game-logo img {
     height: 50px;
+    display: block;
 }
 
 .level-indicator {
     background: white;
     border-radius: 20px;
     padding: 10px 30px;
-    margin-bottom: 20px;
     box-shadow: 0 5px 15px rgba(0,0,0,0.1);
     font-size: 1.5rem;
     font-weight: bold;
     color: #333;
 }
 
+.game-content {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 120px;
+    padding-bottom: 200px;
+}
+
 .cards-container {
     display: flex;
-    gap: 20px;
+    gap: 30px;
     justify-content: center;
     align-items: center;
     flex-wrap: wrap;
     padding: 20px;
-    margin-top: 30px;
-    min-height: 200px;
 }
 
 .card {
-    width: 180px;
-    height: 180px;
+    width: 200px;
+    height: 200px;
     background: white;
     border-radius: 50%;
     display: flex;
@@ -333,7 +341,6 @@ body {
     transition: transform 0.3s ease;
 }
 
-/* ZOOM quando pronunciar */
 .card.speaking img {
     animation: wordZoom 0.8s ease;
 }
@@ -373,8 +380,8 @@ body {
     bottom: 0;
     left: 50%;
     transform: translateX(-50%);
-    width: 180px;
-    height: 180px;
+    width: 220px;
+    height: 220px;
     background: url('assets/characters/bubu-standing.webp') center/contain no-repeat;
     z-index: 500;
 }
@@ -391,15 +398,15 @@ body {
 
 .bubu-speech {
     position: absolute;
-    top: -70px;
+    top: -80px;
     left: 50%;
     transform: translateX(-50%);
     background: white;
-    border-radius: 25px;
-    padding: 15px 25px;
+    border-radius: 30px;
+    padding: 15px 30px;
     box-shadow: 0 5px 20px rgba(0,0,0,0.2);
     white-space: nowrap;
-    font-size: 1.3rem;
+    font-size: 1.5rem;
     font-weight: bold;
     color: #2196F3;
 }
@@ -489,8 +496,8 @@ body {
 }
 
 .control-btn {
-    width: 50px;
-    height: 50px;
+    width: 55px;
+    height: 55px;
     border-radius: 50%;
     border: none;
     background: white;
@@ -503,7 +510,7 @@ body {
     transform: scale(1.1);
 }
 
-/* RESPONSIVO MOBILE */
+/* RESPONSIVO MOBILE - MUITO MAIOR */
 @media (max-width: 768px) {
     .play-btn {
         padding: 25px 50px;
@@ -511,8 +518,8 @@ body {
     }
 
     .card {
-        width: 130px;
-        height: 130px;
+        width: 160px;
+        height: 160px;
     }
 
     .card img {
@@ -521,46 +528,50 @@ body {
     }
 
     .bubu-walking,
-    .bubu-standing,
-    .bubu-game {
-        width: 150px;
-        height: 150px;
+    .bubu-standing {
+        width: 180px;
+        height: 180px;
         bottom: 10%;
     }
 
+    .bubu-game {
+        width: 200px;
+        height: 200px;
+    }
+
     .bubu-walking {
-        background-size: 600px 150px;
+        background-size: 720px 180px;
     }
 
     @keyframes walkCycle {
         0%   { background-position: 0px 0; }
-        25%  { background-position: -150px 0; }
-        50%  { background-position: -300px 0; }
-        75%  { background-position: -450px 0; }
+        25%  { background-position: -180px 0; }
+        50%  { background-position: -360px 0; }
+        75%  { background-position: -540px 0; }
         100% { background-position: 0px 0; }
     }
 
     .speech-text {
-        font-size: 1.8rem;
-    }
-
-    .level-indicator {
-        font-size: 1.2rem;
-        padding: 8px 20px;
-    }
-
-    .bubu-speech {
-        font-size: 1rem;
-        padding: 10px 15px;
-        top: -60px;
-    }
-
-    .congrats-title {
         font-size: 2rem;
     }
 
-    .congrats-text {
+    .level-indicator {
+        font-size: 1.3rem;
+        padding: 10px 25px;
+    }
+
+    .bubu-speech {
         font-size: 1.2rem;
+        padding: 12px 20px;
+        top: -70px;
+    }
+
+    .congrats-title {
+        font-size: 2.2rem;
+    }
+
+    .congrats-text {
+        font-size: 1.4rem;
     }
 
     .start-btn {
@@ -570,22 +581,22 @@ body {
     }
 
     .game-logo img {
-        height: 40px;
+        height: 45px;
     }
 
     .game-content {
-        padding-top: 90px;
+        padding-top: 110px;
+        padding-bottom: 220px;
     }
 
     .cards-container {
-        gap: 15px;
-        margin-top: 20px;
+        gap: 20px;
     }
 
     .control-btn {
-        width: 45px;
-        height: 45px;
-        font-size: 1.3rem;
+        width: 50px;
+        height: 50px;
+        font-size: 1.4rem;
     }
 }
 
@@ -596,39 +607,43 @@ body {
     }
 
     .card {
-        width: 100px;
-        height: 100px;
+        width: 130px;
+        height: 130px;
     }
 
     .cards-container {
-        gap: 10px;
+        gap: 15px;
         padding: 10px;
     }
 
     .bubu-walking,
-    .bubu-standing,
-    .bubu-game {
-        width: 120px;
-        height: 120px;
+    .bubu-standing {
+        width: 160px;
+        height: 160px;
         bottom: 8%;
     }
 
+    .bubu-game {
+        width: 180px;
+        height: 180px;
+    }
+
     .bubu-walking {
-        background-size: 480px 120px;
+        background-size: 640px 160px;
     }
 
     @keyframes walkCycle {
         0%   { background-position: 0px 0; }
-        25%  { background-position: -120px 0; }
-        50%  { background-position: -240px 0; }
-        75%  { background-position: -360px 0; }
+        25%  { background-position: -160px 0; }
+        50%  { background-position: -320px 0; }
+        75%  { background-position: -480px 0; }
         100% { background-position: 0px 0; }
     }
 
     .bubu-speech {
-        font-size: 0.9rem;
-        padding: 8px 12px;
-        top: -50px;
+        font-size: 1rem;
+        padding: 10px 15px;
+        top: -60px;
     }
 
     .speech-bubble {
@@ -638,15 +653,20 @@ body {
     }
 
     .speech-text {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
     }
 
     .game-logo img {
-        height: 35px;
+        height: 40px;
     }
 
     .level-indicator {
-        font-size: 1rem;
-        padding: 6px 15px;
+        font-size: 1.1rem;
+        padding: 8px 20px;
+    }
+
+    .game-content {
+        padding-top: 100px;
+        padding-bottom: 200px;
     }
 }
