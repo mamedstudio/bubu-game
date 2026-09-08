@@ -183,14 +183,14 @@ body {
 /* BOTÃO START - REPOSICIONADO */
 .start-btn {
     position: fixed;
-    bottom: 5%;
+    bottom: 3%;
     left: 50%;
     transform: translateX(-50%);
     background: linear-gradient(135deg, #FF6B6B 0%, #FFA07A 100%);
     color: white;
     border: none;
-    padding: 20px 50px;
-    font-size: 2rem;
+    padding: 18px 40px;
+    font-size: 1.8rem;
     font-weight: bold;
     border-radius: 50px;
     cursor: pointer;
@@ -199,6 +199,23 @@ body {
     z-index: 300;
     font-family: 'Comic Sans MS', sans-serif;
     animation: showBtn 0.5s ease-out 9s forwards, pulse 2s ease-in-out 9s infinite;
+}
+
+/* Mobile - START mais baixo para não sobrepor BUBU */
+@media (max-width: 768px) {
+    .start-btn {
+        bottom: 2%;
+        padding: 15px 35px;
+        font-size: 1.6rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .start-btn {
+        bottom: 1.5%;
+        padding: 12px 30px;
+        font-size: 1.4rem;
+    }
 }
 
 @keyframes showBtn {
