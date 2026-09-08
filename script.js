@@ -42,6 +42,8 @@ let currentItem = null;
 let isAnswering = false;
 let synth = window.speechSynthesis;
 let currentCards = [];
+let audioQueue = []; // Fila de áudios sequenciais
+let isSpeaking = false;
 
 // Elementos DOM
 const startBtn = document.getElementById('startBtn');
@@ -58,7 +60,7 @@ const soundBtn = document.getElementById('soundBtn');
 const homeBtn = document.getElementById('homeBtn');
 
 // ============================================
-// PLAYER DE ÁUDIO
+// PLAYER DE ÁUDIO (MÚSICAS)
 // ============================================
 const audioPlayer = {
     openingMusic: null,
@@ -79,11 +81,11 @@ const audioPlayer = {
         });
         
         this.openingMusic.addEventListener('error', (e) => {
-            console.error('❌ Erro ao carregar abertura:', e);
+            console.error('❌ Erro abertura:', e);
         });
         
         this.backgroundMusic.addEventListener('error', (e) => {
-            console.error('❌ Erro ao carregar trilha:', e);
+            console.error('❌ Erro trilha:', e);
         });
     },
     
@@ -91,11 +93,8 @@ const audioPlayer = {
         if (!this.isMuted) {
             this.openingMusic.currentTime = 0;
             this.openingMusic.play()
-                .then(() => console.log('🎵 Música de abertura tocando!'))
-                .catch(err => {
-                    console.warn('⚠️ Autoplay bloqueado:', err);
-                    console.log(' Aguardando interação do usuário...');
-                });
+                .then(() => console.log('🎵 Abertura tocando!'))
+                .catch(err => console.warn('️ Autoplay bloqueado:', err));
         }
     },
     
@@ -106,7 +105,7 @@ const audioPlayer = {
             
             this.backgroundMusic.currentTime = 0;
             this.backgroundMusic.play()
-                .then(() => console.log('🎵 Trilha de fundo tocando!'))
+                .then(() => console.log('🎵 Trilha tocando!'))
                 .catch(err => console.warn('⚠️ Trilha bloqueada:', err));
         }
     },
@@ -135,27 +134,109 @@ const audioPlayer = {
 audioPlayer.init();
 
 // ============================================
+// SISTEMA DE FILA DE ÁUDIO SEQUENCIAL
+// ============================================
+function speakSequential(text, options = {}) {
+    return new Promise((resolve) => {
+        const {
+            onSpeak,      // Callback quando começa a falar
+            onEnd,        // Callback quando termina
+            repeat = false, // Se deve repetir 2x
+            pauseAfter = 500 // Pausa após terminar (ms)
+        } = options;
+        
+        const doSpeak = (textToSpeak, isLast) => {
+            const utterance = new SpeechSynthesisUtterance(textToSpeak);
+            utterance.lang = 'en-US';
+            utterance.rate = 0.8;
+            utterance.pitch = 1.3;
+            
+            utterance.onstart = () => {
+                if (onSpeak) onSpeak();
+            };
+            
+            utterance.onend = () => {
+                if (isLast) {
+                    setTimeout(() => {
+                        isSpeaking = false;
+                        processQueue();
+                        if (onEnd) onEnd();
+                        resolve();
+                    }, pauseAfter);
+                } else {
+                    // Ainda tem repetição
+                    setTimeout(() => {
+                        doSpeak(textToSpeak, true);
+                    }, 500); // 500ms entre repetições
+                }
+            };
+            
+            synth.speak(utterance);
+        };
+        
+        audioQueue.push(() => doSpeak(text, !repeat));
+        processQueue();
+    });
+}
+
+function processQueue() {
+    if (isSpeaking || audioQueue.length === 0) return;
+    
+    isSpeaking = true;
+    const next = audioQueue.shift();
+    next();
+}
+
+function clearQueue() {
+    audioQueue = [];
+    synth.cancel();
+    isSpeaking = false;
+}
+
+// Fala simples (para casos únicos)
+function speak(text, callback) {
+    clearQueue();
+    
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = 'en-US';
+    utterance.rate = 0.8;
+    utterance.pitch = 1.3;
+    
+    if (callback) {
+        utterance.onend = callback;
+    }
+    
+    synth.speak(utterance);
+}
+
+// ============================================
 // SEQUÊNCIA DA CAPA
 // ============================================
 window.addEventListener('load', () => {
-    console.log('🎮 Jogo carregado, iniciando sequência...');
+    console.log('🎮 Jogo carregado!');
     
     setTimeout(() => {
         audioPlayer.playOpening();
     }, 500);
     
+    // Sequência da animação com áudio sequencial
     setTimeout(() => {
         setTimeout(() => {
             document.querySelector('.speech-bubble').classList.add('show');
-            speak("Hi! I'm BUBU!", () => {
-                setTimeout(() => {
+            
+            speakSequential("Hi! I'm BUBU!", {
+                pauseAfter: 2000,
+                onEnd: () => {
                     document.getElementById('speechText').textContent = "Let's play!";
-                    speak("Let's play!");
-                }, 2000);
+                    speakSequential("Let's play!", {
+                        pauseAfter: 1000
+                    });
+                }
             });
         }, 3500);
     }, 500);
     
+    // Auto-pulo após 16s
     setTimeout(() => {
         if (document.querySelector('.logo-screen').style.display !== 'none') {
             document.getElementById('startBtn').click();
@@ -167,7 +248,8 @@ window.addEventListener('load', () => {
 // BOTÃO SKIP
 // ============================================
 skipBtn.addEventListener('click', () => {
-    console.log('⏭️ Pulando abertura...');
+    console.log('⏭️ Pulando...');
+    clearQueue();
     audioPlayer.stopAll();
     
     document.querySelector('.logo-screen').style.display = 'none';
@@ -209,13 +291,14 @@ function loadLevel(levelIndex) {
     gameScreen.style.background = level.background;
     levelIndicator.textContent = `Level ${levelIndex + 1}: ${level.name}`;
     
-    setTimeout(() => {
-        speak(`Let's play ${level.name}!`, () => {
-            setTimeout(() => {
-                loadRound();
-            }, 2000);
-        });
-    }, 500);
+    clearQueue();
+    
+    speakSequential(`Let's play ${level.name}!`, {
+        pauseAfter: 2000,
+        onEnd: () => {
+            loadRound();
+        }
+    });
 }
 
 // ============================================
@@ -225,6 +308,7 @@ function loadRound() {
     isAnswering = true;
     cardsContainer.innerHTML = '';
     currentCards = [];
+    clearQueue();
     
     const level = levels[currentLevel];
     const shuffled = [...level.items].sort(() => Math.random() - 0.5);
@@ -233,6 +317,7 @@ function loadRound() {
     
     bubuSpeech.textContent = `Where is the ${currentItem.word}?`;
     
+    // Criar cards
     roundItems.forEach((item, index) => {
         const card = document.createElement('div');
         card.className = 'card';
@@ -248,37 +333,52 @@ function loadRound() {
         cardsContainer.appendChild(card);
     });
     
+    // Falar pergunta e depois pronunciar itens
     setTimeout(() => {
-        speak(`Where is the ${currentItem.word}?`, () => {
-            setTimeout(() => {
-                pronounceItems(roundItems);
-            }, 2000);
+        speakSequential(`Where is the ${currentItem.word}?`, {
+            repeat: true,
+            pauseAfter: 2000,
+            onEnd: () => {
+                pronounceItemsSequential(roundItems);
+            }
         });
     }, 500);
 }
 
 // ============================================
-// PRONUNCIAR ITENS COM ZOOM
+// PRONUNCIAR ITENS SEQUENCIALMENTE COM ZOOM
 // ============================================
-function pronounceItems(items) {
-    items.forEach((item, index) => {
-        setTimeout(() => {
-            const card = currentCards[index];
-            if (card) {
-                card.classList.add('speaking');
-                
-                speak(item.word, () => {
-                    setTimeout(() => {
-                        speak(item.word, () => {
-                            setTimeout(() => {
-                                card.classList.remove('speaking');
-                            }, 600);
-                        });
-                    }, 500);
-                });
-            }
-        }, index * 3000);
-    });
+function pronounceItemsSequential(items) {
+    let index = 0;
+    
+    function speakNext() {
+        if (index >= items.length) return;
+        
+        const item = items[index];
+        const card = currentCards[index];
+        
+        if (card) {
+            speakSequential(item.word, {
+                repeat: true,
+                pauseAfter: 1500,
+                onSpeak: () => {
+                    // ZOOM EXATO quando começa a falar
+                    card.classList.add('speaking');
+                },
+                onEnd: () => {
+                    // Remove zoom após terminar
+                    card.classList.remove('speaking');
+                    index++;
+                    setTimeout(speakNext, 500);
+                }
+            });
+        } else {
+            index++;
+            speakNext();
+        }
+    }
+    
+    speakNext();
 }
 
 // ============================================
@@ -289,30 +389,48 @@ function handleAnswer(selected, card, event) {
     
     if (selected.word === currentItem.word) {
         isAnswering = false;
+        clearQueue();
+        
         card.classList.add('correct');
         bubuGame.classList.add('celebrate');
         
         bubuSpeech.textContent = `${selected.word}! Great job!`;
         
-        speak(`${selected.word}! ${selected.word}! Great job!`, () => {
-            setTimeout(() => {
+        speakSequential(`${selected.word}! ${selected.word}! Great job!`, {
+            repeat: true,
+            pauseAfter: 1500,
+            onEnd: () => {
                 createConfetti();
-                
                 setTimeout(() => {
                     showCongratulations();
                 }, 1500);
-            }, 1000);
+            }
         });
         
     } else {
         card.classList.add('wrong');
         bubuSpeech.textContent = 'Try again!';
+        
         speak('Try again! You can do it!', () => {
             setTimeout(() => {
-                speak(`Where is the ${currentItem.word}?`, () => {
-                    setTimeout(() => {
-                        pronounceItems([currentItem]);
-                    }, 2000);
+                clearQueue();
+                speakSequential(`Where is the ${currentItem.word}?`, {
+                    repeat: true,
+                    pauseAfter: 1500,
+                    onEnd: () => {
+                        // Pronunciar só o item correto
+                        const correctCard = currentCards.find(c => c.dataset.word === currentItem.word);
+                        if (correctCard) {
+                            correctCard.classList.add('speaking');
+                            speakSequential(currentItem.word, {
+                                repeat: true,
+                                pauseAfter: 1000,
+                                onEnd: () => {
+                                    correctCard.classList.remove('speaking');
+                                }
+                            });
+                        }
+                    }
                 });
             }, 2000);
         });
@@ -329,7 +447,11 @@ function handleAnswer(selected, card, event) {
 function showCongratulations() {
     congratsText.textContent = `You completed Level ${currentLevel + 1}!`;
     congratsScreen.classList.add('active');
-    speak('Congratulations! Congratulations!');
+    
+    speakSequential('Congratulations! Congratulations!', {
+        repeat: false,
+        pauseAfter: 1000
+    });
 }
 
 // ============================================
@@ -338,17 +460,22 @@ function showCongratulations() {
 nextLevelBtn.addEventListener('click', () => {
     congratsScreen.classList.remove('active');
     bubuGame.classList.remove('celebrate');
+    clearQueue();
     
     if (currentLevel < levels.length - 1) {
         loadLevel(currentLevel + 1);
     } else {
-        congratsText.textContent = 'You completed all levels! ';
+        congratsText.textContent = 'You completed all levels!';
         congratsScreen.classList.add('active');
-        speak('You completed all levels! Amazing! Amazing!');
-        
-        setTimeout(() => {
-            location.reload();
-        }, 3000);
+        speakSequential('You completed all levels! Amazing! Amazing!', {
+            repeat: false,
+            pauseAfter: 2000,
+            onEnd: () => {
+                setTimeout(() => {
+                    location.reload();
+                }, 3000);
+            }
+        });
     }
 });
 
@@ -357,12 +484,13 @@ nextLevelBtn.addEventListener('click', () => {
 // ============================================
 soundBtn.addEventListener('click', () => {
     if (currentItem) {
-        speak(`Where is the ${currentItem.word}?`, () => {
-            setTimeout(() => {
-                pronounceItems(currentCards.map(card => ({
-                    word: card.dataset.word
-                })));
-            }, 2000);
+        clearQueue();
+        speakSequential(`Where is the ${currentItem.word}?`, {
+            repeat: true,
+            pauseAfter: 2000,
+            onEnd: () => {
+                pronounceItemsSequential(currentCards.map(c => ({ word: c.dataset.word })));
+            }
         });
     }
 });
@@ -372,24 +500,6 @@ homeBtn.addEventListener('click', () => {
         location.reload();
     }
 });
-
-// ============================================
-// ÁUDIO (Text-to-Speech)
-// ============================================
-function speak(text, callback) {
-    synth.cancel();
-    
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = 'en-US';
-    utterance.rate = 0.8;
-    utterance.pitch = 1.3;
-    
-    if (callback) {
-        utterance.onend = callback;
-    }
-    
-    synth.speak(utterance);
-}
 
 // ============================================
 // CONFETES
