@@ -60,7 +60,7 @@ body {
     to { opacity: 1; }
 }
 
-/* BUBU ANDANDO - ANIMAÇÃO CORRIGIDA */
+/* BUBU ANDANDO - CORRIGIDO */
 .bubu-walking {
     position: fixed;
     bottom: 10%;
@@ -68,14 +68,23 @@ body {
     width: 200px;
     height: 200px;
     background-image: url('assets/characters/bubu-walk.webp');
-    background-size: 800px 200px; /* 4 frames de 200px cada */
+    background-size: 800px 200px;
     background-repeat: no-repeat;
     background-position: 0 0;
     animation: 
         walkAcross 3s ease-out 3.5s forwards,
-        walkCycle 0.5s steps(1) infinite 3.5s;
+        walkCycle 0.5s steps(1) infinite 3.5s,
+        hideWalking 0.3s ease-in 6.5s forwards; /* ← ADICIONE ESTA LINHA */
     z-index: 100;
 }
+
+/* ← ADICIONE ESTA NOVA ANIMAÇÃO */
+@keyframes hideWalking {
+    to {
+        opacity: 0;
+        visibility: hidden;
+        display: none;
+    }
 
 @keyframes walkAcross {
     0% { left: -200px; }
