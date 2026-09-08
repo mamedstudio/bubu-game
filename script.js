@@ -67,6 +67,7 @@ const audioPlayer = {
     openingMusic: null,
     backgroundMusic: null,
     isMuted: false,
+    backgroundStarted: false,
     
     init() {
         this.openingMusic = new Audio('assets/audio/abertura.mp3');
@@ -76,10 +77,16 @@ const audioPlayer = {
         this.backgroundMusic.volume = 0.3;
         this.backgroundMusic.loop = true;
         
+        // Quando abertura terminar, iniciar trilha UMA VEZ
         this.openingMusic.addEventListener('ended', () => {
-            console.log(' Abertura terminou');
-            this.startBackground();
+            console.log(' Abertura terminou, iniciando trilha...');
+            if (!this.backgroundStarted) {
+                this.startBackground();
+            }
         });
+        
+        // Prevenir loop da abertura
+        this.openingMusic.loop = false;
     },
     
     playOpening() {
@@ -87,12 +94,13 @@ const audioPlayer = {
             this.openingMusic.currentTime = 0;
             this.openingMusic.play()
                 .then(() => console.log('🎵 Abertura tocando!'))
-                .catch(err => console.warn('️ Autoplay bloqueado:', err));
+                .catch(err => console.warn('⚠️ Autoplay bloqueado:', err));
         }
     },
     
     startBackground() {
-        if (!this.isMuted) {
+        if (!this.isMuted && !this.backgroundStarted) {
+            this.backgroundStarted = true;
             this.openingMusic.pause();
             this.openingMusic.currentTime = 0;
             
@@ -112,7 +120,7 @@ const audioPlayer = {
 audioPlayer.init();
 
 // ============================================
-// BOTÃO PLAY INICIAL (resolve autoplay mobile)
+// BOTÃO PLAY INICIAL
 // ============================================
 playBtn.addEventListener('click', () => {
     playOverlay.style.display = 'none';
@@ -172,11 +180,12 @@ skipBtn.addEventListener('click', () => {
 // INICIAR JOGO
 // ============================================
 startBtn.addEventListener('click', () => {
-    console.log('🎮 Iniciando jogo...');
+    console.log(' Iniciando jogo...');
     gameScreen.classList.add('active');
     skipBtn.style.display = 'none';
     
     audioPlayer.stopAll();
+    audioPlayer.backgroundStarted = false;
     setTimeout(() => {
         audioPlayer.startBackground();
     }, 300);
@@ -204,10 +213,10 @@ function loadLevel(levelIndex) {
 }
 
 // ============================================
-// CARREGAR RODADA (NOVA LÓGICA SEQUENCIAL)
+// CARREGAR RODADA
 // ============================================
 function loadRound() {
-    isAnswering = false; // Bloqueia cliques até todos aparecerem
+    isAnswering = false;
     cardsContainer.innerHTML = '';
     currentCards = [];
     synth.cancel();
@@ -216,14 +225,6 @@ function loadRound() {
     const shuffled = [...level.items].sort(() => Math.random() - 0.5);
     roundItems = shuffled.slice(0, 3);
     currentItem = roundItems[Math.floor(Math.random() * 3)];
-    
-    // Sequência pedagógica:
-    // 1. "Let's go! Let's go!"
-    // 2. Aparece card 1 → fala nome 2x com zoom
-    // 3. Aparece card 2 → fala nome 2x com zoom
-    // 4. Aparece card 3 → fala nome 2x com zoom
-    // 5. Todos clicáveis
-    // 6. Pergunta "Where is the X?"
     
     speak("Let's go! Let's go!", () => {
         setTimeout(() => {
@@ -237,7 +238,6 @@ function loadRound() {
 // ============================================
 function showAndPronounceItem(index) {
     if (index >= roundItems.length) {
-        // Todos apareceram, agora faz a pergunta
         setTimeout(() => {
             makeAllCardsClickable();
             askQuestion();
@@ -247,7 +247,6 @@ function showAndPronounceItem(index) {
     
     const item = roundItems[index];
     
-    // Criar card
     const card = document.createElement('div');
     card.className = 'card not-clickable';
     card.innerHTML = `<img src="${item.image}" alt="${item.word}">`;
@@ -257,15 +256,12 @@ function showAndPronounceItem(index) {
     cardsContainer.appendChild(card);
     currentCards.push(card);
     
-    // Animar entrada
     setTimeout(() => {
         card.classList.remove('not-clickable');
         card.classList.add('visible');
         
-        // Falar o nome 2 vezes com zoom
         setTimeout(() => {
             pronounceWordWithZoom(item.word, card, () => {
-                // Próximo item após 1.5s
                 setTimeout(() => {
                     showAndPronounceItem(index + 1);
                 }, 1500);
@@ -281,7 +277,6 @@ function pronounceWordWithZoom(word, card, callback) {
     card.classList.add('speaking');
     
     speak(word, () => {
-        // Segunda repetição
         setTimeout(() => {
             speak(word, () => {
                 setTimeout(() => {
@@ -348,7 +343,6 @@ function handleAnswer(selected, card, event) {
         
         speak('Try again! You can do it!', () => {
             setTimeout(() => {
-                // Repete a pergunta
                 speak(`Where is the ${currentItem.word}?`, null, { repeat: true });
             }, 2000);
         });
